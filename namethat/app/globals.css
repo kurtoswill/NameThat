@@ -3,21 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #111111;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111111;
-    --foreground: #ffffff;
-  }
+  --background: #FFFDF6;
+  --foreground: #1C1C1C;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: "Geist", sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
