@@ -4,7 +4,7 @@
 import React from 'react';
 import { WalletAddress } from "@/components/walletAddress";
 import { Logo } from "@/components/logo";
-import { Navbar } from '@/components/navbar';
+import ResponsiveNavbar from '@/components/navbar';
 import {
   Carousel,
   CarouselContent,
@@ -65,6 +65,10 @@ export default function HomePage() {
             "/images/HorseJoker.jpg",
             "/images/NikeReact.gif",
             "/images/Pillhead.jpg",
+            "/images/NikeDunks.jpg",
+            "/images/Beast.jpg",
+            "/images/SB1.jpg",
+            "/images/V2K.jpg",
           ].map((src, i) => (
             <CarouselItem
               key={i}
@@ -110,6 +114,10 @@ export default function HomePage() {
               "/images/Beast.jpg",
               "/images/SB1.jpg",
               "/images/V2K.jpg",
+              "/images/Adidas.jpg",
+              "/images/OrangeApe.png",
+              "/images/Hape.jpg",
+              "/images/WalterWhite.jpg"
             ].map((src, i) => (
               <CarouselItem
                 key={i}
@@ -146,6 +154,10 @@ export default function HomePage() {
               "/images/OneGravity.png",
               "/images/SB2.jpg",
               "/images/Killua.jpg",
+              "/images/JinWoo.jpg",
+              "/images/V2K.jpg",
+              "/images/ProjectNFT.jpg",
+              "/images/Liquid.gif",
             ].map((src, i) => (
               <CarouselItem
                 key={i}
@@ -245,7 +257,7 @@ export default function HomePage() {
       </div>
 
       <footer className='mt-[100px]'>
-        <Navbar />
+        <ResponsiveNavbar />
       </footer>
     </main>
   );
