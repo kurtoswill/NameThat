@@ -20,7 +20,6 @@ export default function Profile() {
                 <Logo />
                 <BaseWalletAddress />
             </header>
-<<<<<<< HEAD
 
             <section className="text-pink text-4xl font-bold mb-8">
                 My Gallery
@@ -42,7 +41,6 @@ export default function Profile() {
                     <div className="text-blue text-sm">0x38a5310aa296F5982c...</div>
                 </div>
             </section>
-
 
             <div className="border-t border-b border-blue py-6 mb-12">
                 <div className="text-pink text-2xl font-semibold mb-4">
@@ -136,18 +134,7 @@ export default function Profile() {
                 </div>
             </section>
 
-
-
-
-
-
-
-
             <footer className="mt-20">
-=======
-                
-            <footer>
->>>>>>> explore
                 <ResponsiveNavbar />
             </footer>
         </main>
