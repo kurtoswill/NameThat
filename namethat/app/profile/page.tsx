@@ -20,6 +20,7 @@ export default function Profile() {
                 <Logo />
                 <BaseWalletAddress />
             </header>
+<<<<<<< HEAD
 
             <section className="text-pink text-4xl font-bold mb-8">
                 My Gallery
@@ -143,6 +144,10 @@ export default function Profile() {
 
 
             <footer className="mt-20">
+=======
+                
+            <footer>
+>>>>>>> explore
                 <ResponsiveNavbar />
             </footer>
         </main>
