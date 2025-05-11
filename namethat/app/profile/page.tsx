@@ -10,7 +10,7 @@ export default function Profile() {
                 <Logo />
                 <BaseWalletAddress />
             </header>
-            
+                
             <footer>
                 <ResponsiveNavbar />
             </footer>
