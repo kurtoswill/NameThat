@@ -1,7 +1,7 @@
 "use client";
 
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useOnchainKit } from "@coinbase/onchainkit/minikit";
+// Removed: import { useOnchainKit } from "@coinbase/onchainkit/minikit";
 
 const supabase = createClientComponentClient();
 
@@ -10,21 +10,21 @@ export async function handleUploadAndSavePost({
   caption,
   mode,
   category,
+  walletAddress,
 }: {
   file: File;
   caption: string;
   mode: "open" | "vote_only" | "hybrid";
   category: string;
+  walletAddress: string;
 }) {
   try {
-    const { wallet } = useOnchainKit();
-
-    if (!wallet?.address) {
+    if (!walletAddress) {
       alert("Please connect your wallet.");
       return;
     }
 
-    const filename = `${wallet.address}-${Date.now()}-${file.name}`;
+    const filename = `${walletAddress}-${Date.now()}-${file.name}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("post_uploads")
       .upload(`user-uploads/${filename}`, file);
@@ -38,7 +38,7 @@ export async function handleUploadAndSavePost({
     const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/post_uploads/${uploadData.path}`;
 
     const { error: insertError } = await supabase.from("posts").insert({
-      wallet_address: wallet.address,
+      wallet_address: walletAddress,
       image_url: imageUrl,
       caption,
       mode,
