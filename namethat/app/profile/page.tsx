@@ -1,18 +1,18 @@
 import React from 'react'
-import { WalletAddress } from "@/components/walletAddress";
+import { BaseWalletAddress } from "@/components/walletAddress";
 import { Logo } from "@/components/logo";
-import { Navbar } from '@/components/navbar';
+import ResponsiveNavbar from '@/components/navbar';
 
 export default function Profile() {
     return (
         <main className="bg-[#FFFDF6] m-[25px]">
             <header className="flex justify-between">
                 <Logo />
-                <WalletAddress />
+                <BaseWalletAddress />
             </header>
             
             <footer>
-                <Navbar />
+                <ResponsiveNavbar />
             </footer>
         </main>
     );
