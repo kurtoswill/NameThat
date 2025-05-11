@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from 'tailwindcss-animate';
+import textStroke from '@designbycode/tailwindcss-text-stroke';
 
 const config: Config = {
     darkMode: ["class"],
@@ -87,6 +89,9 @@ const config: Config = {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    tailwindcssAnimate,
+    textStroke,
+  ],
 };
 export default config;
