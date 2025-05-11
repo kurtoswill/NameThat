@@ -76,7 +76,7 @@ export default function ResponsiveNavbar() {
   return (
     <>
       {/* Desktop Navbar (top) */}
-      <nav className="hidden md:flex items-center justify-between bg-[#FFFDF6] px-[200px] py-6 shadow-md fixed top-0 left-0 right-0 z-50 border-blue border-b-2">
+      <nav className="hidden md:flex items-center justify-between bg-[#FFFDF6] px-[200px] py-6 shadow-md fixed top-0 left-0 right-0 z-50 border-blue">
         {/* Left: Logo + Nav Links */}
         <div className="flex items-center">
           <Logo />

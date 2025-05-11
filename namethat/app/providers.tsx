@@ -4,21 +4,21 @@ import { type ReactNode } from "react";
 import { base } from "wagmi/chains";
 import { MiniKitProvider } from "@coinbase/onchainkit/minikit";
 
-export function Providers(props: { children: ReactNode }) {
+export function Providers({ children }: { children: ReactNode }) {
   return (
     <MiniKitProvider
       apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
-      chain={base}
+      chain={base} // Using Base mainnet — for testnet use `baseSepolia`
       config={{
         appearance: {
-          mode: "auto",
+          mode: "auto", // or "light" / "dark"
           theme: "mini-app-theme",
-          name: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
-          logo: process.env.NEXT_PUBLIC_ICON_URL,
+          name: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "NameThat",
+          logo: process.env.NEXT_PUBLIC_ICON_URL || "/logo.png",
         },
       }}
     >
-      {props.children}
+      {children}
     </MiniKitProvider>
   );
 }

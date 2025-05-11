@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { WalletAddress } from "@/components/walletAddress";
+import { BaseWalletAddress } from "@/components/walletAddress";
 import { Logo } from "@/components/logo";
 import ResponsiveNavbar from '@/components/navbar';
 import {
@@ -29,7 +29,7 @@ export default function HomePage() {
     >
       <header className="flex justify-between items-center">
         <Logo />
-        <WalletAddress />
+        <BaseWalletAddress />
       </header>
 
       <section>
@@ -114,7 +114,7 @@ export default function HomePage() {
               "/images/Beast.jpg",
               "/images/SB1.jpg",
               "/images/V2K.jpg",
-              "/images/Adidas.jpg",
+              "/images/NikeDunks.jpg",
               "/images/OrangeApe.png",
               "/images/Hape.jpg",
               "/images/WalterWhite.jpg"
@@ -154,10 +154,6 @@ export default function HomePage() {
               "/images/OneGravity.png",
               "/images/SB2.jpg",
               "/images/Killua.jpg",
-              "/images/JinWoo.jpg",
-              "/images/V2K.jpg",
-              "/images/ProjectNFT.jpg",
-              "/images/Liquid.gif",
             ].map((src, i) => (
               <CarouselItem
                 key={i}
