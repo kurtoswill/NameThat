@@ -89,13 +89,16 @@ export default function ResponsiveNavbar() {
         <div className="flex items-center space-x-6">
           <Link
             href="/create"
-            className="flex items-center gap-2 px-4 py-2 bg-blue text-white rounded-md font-semibold hover:bg-blue/80 transition"
+            className="flex items-center gap-2 px-4 py-2 bg-blue text-white rounded-md font-semibold hover:bg-blue/80 transition h-10"
             aria-label="Create new item"
           >
             <CreateIcon className="w-6 h-6" />
             <span>Create</span>
           </Link>
-          <WalletAddress /> {/* Desktop only */}
+          {/* Ensure WalletAddress buttons are in a flex row with the same gap */}
+          <div className="flex items-center h-10 space-x-3">
+            <WalletAddress />
+          </div>
         </div>
       </nav>
 
