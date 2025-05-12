@@ -51,7 +51,7 @@ export default function CreateForm() {
       <div className="w-full md:w-1/2">
         <label
           htmlFor="upload"
-          className="block aspect-square border-2 border-dashed rounded-xl cursor-pointer bg-gray-100 flex items-center justify-center overflow-hidden"
+          className="aspect-square border-2 border-dashed rounded-xl cursor-pointer bg-gray-100 flex items-center justify-center overflow-hidden"
           tabIndex={0}
         >
           <span className="text-blue text-sm">
