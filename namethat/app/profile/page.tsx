@@ -1,13 +1,24 @@
+"use client";
+
 import ResponsiveNavbar from "@/components/navbar";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
 
 export default function Profile() {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = (address: string) => {
+        navigator.clipboard.writeText(address);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1200);
+    };
+
     return (
         <>
             <ResponsiveNavbar />
             <main
-                className="bg-white px-6 py-10 min-h-screen
+                className="font-poppins bg-white px-6 py-10 min-h-screen
                 m-[25px]
                 md:m-0
                 md:px-[200px]
@@ -27,10 +38,31 @@ export default function Profile() {
                         priority
                     />
                     <div>
-                        <div className="bg-blue text-white text-sm px-3 py-1 rounded-lg inline-block font-semibold mb-1">
+                        <div className="bg-blue text-white text-sm px-3 py-2 rounded-lg inline-block font-semibold mb-1">
                             Deannie
                         </div>
-                        <div className="text-blue text-sm">0x38a5310aa296F5982c...</div>
+                        {/* Only wallet address below username */}
+                        <div className="mt-1 text-blue text-sm font-poppins break-all px-3 py-2 hover:rounded-md hover:bg-blue/10 border-2 border-blue rounded-md">
+                            <ConnectButton.Custom>
+                                {({ account, mounted }) =>
+                                    mounted && account ? (
+                                        <button
+                                            type="button"
+                                            className=" focus:outline-none"
+                                            onClick={() => handleCopy(account.address)}
+                                            title="Copy address"
+                                        >
+                                            {account.address}
+                                            {copied && (
+                                                <span className="ml-2 text-pink font-normal">Copied!</span>
+                                            )}
+                                        </button>
+                                    ) : (
+                                        <span>Not connected</span>
+                                    )
+                                }
+                            </ConnectButton.Custom>
+                        </div>
                     </div>
                 </section>
 
