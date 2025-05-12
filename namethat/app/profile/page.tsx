@@ -17,7 +17,7 @@ export default function Profile() {
                 flex flex-col"
             >
                 {/* No header here, navbar handles logo and wallet */}
-                <section className="flex items-center gap-6 mb-10 mt-10">
+                <section className="flex items-center gap-6 mb-10 mt-5">
                     <Image
                         src="/images/placeholder.png"
                         alt="Profile"

@@ -54,11 +54,11 @@ export default function Leaderboard() {
             <main className="bg-[#FFFDF6] m-[25px] md:m-0 md:px-[200px] md:py-[40px] md:rounded-[24px] md:shadow-lg min-h-screen flex flex-col pb-24">
                 {/* No header here, navbar handles logo and wallet */}
                 <div className="flex-1 flex flex-col items-center justify-center w-full">
-                    <section className="text-left w-full mt-[40px]">
+                    <section className="text-left w-full mt-[20px]">
                         <h1 className="text-[42px] md:text-[56px] font-semibold text-pink">
                             Leaderboards
                         </h1>
-                        <p className="text-[15px] md:text-[20px] max-w-[600px]">
+                        <p className="text-[15px] md:text-[20px]">
                             Climb the ranks by earning the most community votes—only the most loved rise to the top.
                         </p>
                     </section>

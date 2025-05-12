@@ -43,7 +43,7 @@ export default function Explore() {
             >
                 {/* Top section: match homepage */}
                 <section>
-                    <h1 className="text-[42px] md:text-[56px] font-semibold mt-[40px] text-pink">
+                    <h1 className="text-[42px] md:text-[56px] font-semibold mt-[20px] text-pink">
                         Explore
                     </h1>
                     <p className="text-[15px] md:text-[20px]">
