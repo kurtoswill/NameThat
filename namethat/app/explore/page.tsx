@@ -37,8 +37,7 @@ export default function Explore() {
         md:shadow-lg
         min-h-screen
         flex flex-col
-      "
-        >
+      ">
             <header className="flex justify-between items-center mb-8">
                 <Logo />
                 <BaseWalletAddress />
