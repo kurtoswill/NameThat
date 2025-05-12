@@ -1,27 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import React from "react";
+import { BaseWalletAddress as WalletAddress } from "./walletAddress"; // <-- Import the shared WalletAddress
 
 // Placeholder Logo
 const Logo = () => (
   <div className="w-10 h-10 rounded-full bg-blue flex items-center justify-center text-white font-bold select-none">
     {/* Replace with your SVG or image */}
     <span></span>
-  </div>
-);
-
-// Placeholder WalletAddress
-const WalletAddress = () => (
-  <div className="flex items-center gap-2 px-4 py-2 rounded-md border-2 border-blue bg-white text-blue font-mono font-semibold shadow-sm">
-    <img
-      src="/images/placeholder.png"
-      alt="Wallet Avatar"
-      className="w-6 h-6 rounded-full object-cover"
-    />
-    0x38a5310...
   </div>
 );
 
@@ -106,13 +95,20 @@ export default function ResponsiveNavbar() {
             <CreateIcon className="w-6 h-6" />
             <span>Create</span>
           </Link>
-          <WalletAddress />
+          <WalletAddress /> {/* Desktop only */}
         </div>
       </nav>
 
+      {/* WalletAddress for mobile (top, same x axis as logo) */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#FFFDF6] py-2 shadow">
+        <div className="flex items-center justify-between px-4">
+          <Logo />
+          <WalletAddress />
+        </div>
+      </div>
 
       {/* Mobile Navbar (bottom) */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-blue bg-opacity-90 backdrop-blur-md rounded-t-[12px] shadow-lg z-50 flex justify-around items-center py-3 md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 bg-blue bg-opacity-90 backdrop-blur-md rounded-t-[12px] shadow-lg z-40 flex justify-around items-center py-3 md:hidden">
         {/* Home */}
         <Link href="/" aria-label="Home">
           <HomeIcon
@@ -153,6 +149,7 @@ export default function ResponsiveNavbar() {
             }`}
           />
         </Link>
+        {/* WalletAddress removed from here */}
       </nav>
       {/* Spacer for desktop navbar */}
       <div className="hidden md:block" style={{ height: 80 }} />
