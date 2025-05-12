@@ -1,24 +1,28 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { WagmiProvider } from "wagmi";
+import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { base } from "wagmi/chains";
-import { MiniKitProvider } from "@coinbase/onchainkit/minikit";
+import { ReactNode } from "react";
+
+const config = getDefaultConfig({
+  appName: "NameThat",
+  projectId: "a67a9a502f078068327f58a05fb359e1",
+  chains: [base],
+  ssr: false,
+});
+
+const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <MiniKitProvider
-      apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
-      chain={base} // Using Base mainnet — for testnet use `baseSepolia`
-      config={{
-        appearance: {
-          mode: "auto", // or "light" / "dark"
-          theme: "mini-app-theme",
-          name: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "NameThat",
-          logo: process.env.NEXT_PUBLIC_ICON_URL || "/logo.png",
-        },
-      }}
-    >
-      {children}
-    </MiniKitProvider>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider>
+          {children}
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }

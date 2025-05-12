@@ -1,11 +1,14 @@
 "use client";
 
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import "@rainbow-me/rainbowkit/styles.css";
+
 import React from "react";
 
 export function BaseWalletAddress() {
   return (
-    <div className="text-blue font-semibold cursor-pointer hover:underline">
-      Connect Wallet
+    <div>
+      <ConnectButton chainStatus="icon" showBalance={false} />
     </div>
   );
 }
