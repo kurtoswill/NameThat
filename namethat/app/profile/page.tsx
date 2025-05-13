@@ -7,11 +7,24 @@ import React, { useState } from "react";
 
 export default function Profile() {
     const [copied, setCopied] = useState(false);
+    const [username, setUsername] = useState("Deannie");
+    const [editing, setEditing] = useState(false);
+    const [tempName, setTempName] = useState(username);
 
     const handleCopy = (address: string) => {
         navigator.clipboard.writeText(address);
         setCopied(true);
         setTimeout(() => setCopied(false), 1200);
+    };
+
+    const handleSave = () => {
+        setUsername(tempName);
+        setEditing(false);
+    };
+
+    const handleCancel = () => {
+        setTempName(username);
+        setEditing(false);
     };
 
     return (
@@ -38,8 +51,79 @@ export default function Profile() {
                         priority
                     />
                     <div>
-                        <div className="bg-blue text-white text-sm px-3 py-2 rounded-lg inline-block font-semibold mb-1">
-                            Deannie
+                        <div className="relative flex items-center mb-1">
+                            {/* Username box with border */}
+                            <div className="flex items-center px-4 py-2 h-10 bg-white text-blue border-blue border-2 rounded-md font-semibold min-w-[120px]">
+                                {editing ? (
+                                    <input
+                                        className="bg-transparent border-none outline-none text-blue font-semibold text-sm w-32"
+                                        value={tempName}
+                                        onChange={e => setTempName(e.target.value)}
+                                        autoFocus
+                                        onFocus={e => e.target.select()}
+                                        onKeyDown={e => {
+                                            if (e.key === "Enter") handleSave();
+                                            if (e.key === "Escape") handleCancel();
+                                        }}
+                                        style={{ minWidth: "80px" }}
+                                    />
+                                ) : (
+                                    <span>{username}</span>
+                                )}
+                            </div>
+                            {/* Icons outside the border */}
+                            {editing ? (
+                                <div className="flex items-center ml-2">
+                                    <button
+                                        className="text-green-600 font-bold text-sm flex items-center"
+                                        onClick={handleSave}
+                                        title="Save"
+                                        disabled={
+                                            tempName.trim() === "" ||
+                                            tempName.trim() === username.trim()
+                                        }
+                                        style={{
+                                            opacity:
+                                                tempName.trim() === "" ||
+                                                tempName.trim() === username.trim()
+                                                    ? 0.5
+                                                    : 1,
+                                            cursor:
+                                                tempName.trim() === "" ||
+                                                tempName.trim() === username.trim()
+                                                    ? "not-allowed"
+                                                    : "pointer",
+                                        }}
+                                    >
+                                        {/* Check icon */}
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="#ec4899" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </button>
+                                    <button
+                                        className="text-pink font-bold ml-2 text-sm flex items-center"
+                                        onClick={handleCancel}
+                                        title="Cancel"
+                                    >
+                                        {/* X icon */}
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    className="ml-2 p-0 bg-transparent border-0 focus:outline-none flex items-center"
+                                    onClick={() => setEditing(true)}
+                                    title="Edit name"
+                                    tabIndex={0}
+                                    style={{ lineHeight: 0, height: "40px" }} // h-10 = 40px
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="22px" viewBox="0 -960 960 960" width="22px" fill="#3b82f6">
+                                        <path d="M160-400v-80h280v80H160Zm0-160v-80h440v80H160Zm0-160v-80h440v80H160Zm360 560v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q8 9 12.5 20t4.5 22q0 11-4 22.5T863-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z"/>
+                                    </svg>
+                                </button>
+                            )}
                         </div>
                         {/* Only wallet address below username */}
                         <div className="mt-1 text-blue text-sm font-poppins break-all px-3 py-2 hover:rounded-md hover:bg-blue/10 border-2 border-blue rounded-md">
