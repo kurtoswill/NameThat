@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { handleUploadAndSavePost } from "@/lib/handleUploadAndSavePost";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useAccount } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { handleUploadAndSavePost } from "@/lib/handleUploadAndSavePost";
-import Cropper from "react-easy-crop";
-import getCroppedImg from "../utils/cropImage";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Area } from "react-easy-crop";
+import Cropper from "react-easy-crop";
+import { useAccount } from "wagmi";
+import getCroppedImg from "../utils/cropImage";
 
 const CATEGORY_OPTIONS = [
   "Animals",
@@ -462,7 +462,7 @@ export default function CreateForm() {
               style={{ boxShadow: '0 4px 16px 0 rgba(255, 0, 128, 0.10)' }}
               onClick={e => {
                 if (!walletAddress) {
-                  e.preventDefault();
+                  e.preventDefault(); // Always prevent submit if not connected
                   if (openConnectModal) {
                     openConnectModal();
                   } else {
