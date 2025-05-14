@@ -33,6 +33,7 @@ export default function Leaderboard() {
       name: "Beat Killer",
       votes: "100,121,483",
       img: "/images/Beast.jpg",
+      icon: "",
       color: "text-darkSilver",
     })),
   ];
