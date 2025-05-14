@@ -164,24 +164,60 @@ export default function PostPage() {
               </button>
             </div>
             {/* Voting List */}
-            <div className="mt-6 flex flex-col gap-2">
-              {names.map((n) => (
-                <div className="flex items-center gap-2" key={n.id}>
-                  <span className="font-bold text-[18px] flex-1">{n.name}</span>
-                  <span className="text-[13px] text-black/60 mr-4 min-w-[110px] text-right">
-                    {n.votes.toLocaleString()} votes
-                  </span>
-                  <button
-                    className={`bg-blue text-white rounded-full px-4 py-1 text-[15px] ${
-                      votedId === n.id ? "opacity-60 cursor-default" : ""
-                    }`}
-                    disabled={votedId !== null}
-                    onClick={() => handleVote(n.id)}
-                  >
-                    {votedId === n.id ? "Voted" : "Vote"}
-                  </button>
-                </div>
-              ))}
+            <div className="mt-6 flex flex-col gap-4">
+              {(() => {
+                // Find the highest vote count for relative bar width
+                const maxVotes = Math.max(...names.map((n) => n.votes), 1);
+                return names.map((n) => (
+                  <div className="flex items-center gap-4" key={n.id}>
+                    <span
+                      className={`font-semibold text-[18px] flex-1 transition-colors ${
+                        votedId === n.id ? "text-pink" : ""
+                      }`}
+                      style={{
+                        minWidth: 0,
+                        maxWidth: 180,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {n.name}
+                    </span>
+                    <div className="flex-1 flex items-center max-w-[320px] min-w-[120px]">
+                      <div className="relative w-full h-7">
+                        <div className="absolute top-0 left-0 w-full h-full rounded-full border border-blue bg-white" />
+                        <div
+                          className={`absolute top-0 left-0 h-full rounded-full transition-all ${
+                            votedId === n.id ? "bg-pink" : "bg-blue"
+                          }`}
+                          style={{
+                            width: `${Math.max(10, (n.votes / maxVotes) * 100)}%`,
+                            minWidth: 28,
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <span className="text-[13px] text-black/60 min-w-[110px] text-right">
+                      {n.votes.toLocaleString()}{" "}
+                      {n.votes === 1 ? "vote" : "votes"}
+                    </span>
+                    <button
+                      className={`rounded-full px-4 py-1 text-[15px] transition-colors
+                        ${
+                          votedId === n.id
+                            ? "bg-pink text-white opacity-80 cursor-default"
+                            : "bg-blue text-white hover:bg-blue/80"
+                        }
+                      `}
+                      disabled={votedId !== null}
+                      onClick={() => handleVote(n.id)}
+                    >
+                      {votedId === n.id ? "Voted" : "Vote"}
+                    </button>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </div>
