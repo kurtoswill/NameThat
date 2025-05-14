@@ -2,7 +2,7 @@ import CreateForm from '@/components/createForm';
 import ResponsiveNavbar from '@/components/navbar';
 import React from 'react';
 
-export default function Submit() {
+export default function Create() {
     return (
         <>
             {/* Navbar always on top */}
