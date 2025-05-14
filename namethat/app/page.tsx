@@ -31,7 +31,7 @@ export default function HomePage() {
       >
         {/* Remove header with Logo and WalletAddress, navbar handles this */}
         <section>
-          <h1 className='text-[42px] md:text-[56px] font-semibold mt-[20px] text-blue'>NameThat</h1>
+          <h1 className='text-[42px] md:text-[56px] font-semibold text-blue'>NameThat</h1>
           <p className='text-[15px] md:text-[20px]'>Upload an image or a GIF, get name ideas from the community, vote on the best, and turn top picks into NFTs.</p>
         </section>
 
