@@ -4,36 +4,28 @@ import ResponsiveNavbar from '@/components/navbar'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export default function Explore() {
-    interface Post {
+    interface NFT {
         id: string;
         image_url: string;
+        name: string;
         caption?: string;
         created_at: string;
-        // Add other fields as needed based on your 'posts' table
     }
 
-    const [posts, setPosts] = useState<Post[]>([]);
+    const [nfts, setNfts] = useState<NFT[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        async function fetchPosts() {
+        async function fetchNFTs() {
             setLoading(true);
-            const { data } = await supabase
-                .from('posts')
-                .select('*')
-                .order('created_at', { ascending: false });
-            setPosts(data || []);
+            const res = await fetch('/api/nft/explore');
+            const { nfts } = await res.json();
+            setNfts(nfts || []);
             setLoading(false);
         }
-        fetchPosts();
+        fetchNFTs();
     }, []);
 
     return (
@@ -60,18 +52,18 @@ export default function Explore() {
                 <section className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-20 mt-5">
                     {loading ? (
                         <div className="col-span-full text-center text-blue">Loading...</div>
-                    ) : posts.length === 0 ? (
-                        <div className="col-span-full text-center text-gray-400">No posts yet.</div>
+                    ) : nfts.length === 0 ? (
+                        <div className="col-span-full text-center text-gray-400">No NFTs yet.</div>
                     ) : (
-                        posts.map((post) => (
+                        nfts.map((nft) => (
                             <Link
-                                key={post.id}
-                                href={`/explore/${post.id}`}
+                                key={nft.id}
+                                href={`/explore/${nft.id}`}
                                 className="rounded-xl overflow-hidden shadow-md bg-white aspect-square block hover:scale-105 transition"
                             >
                                 <Image
-                                    src={post.image_url}
-                                    alt={post.caption || 'NFT'}
+                                    src={nft.image_url}
+                                    alt={nft.caption || nft.name}
                                     width={300}
                                     height={300}
                                     className="w-full h-full object-cover"

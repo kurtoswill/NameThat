@@ -3,13 +3,27 @@
 import ResponsiveNavbar from "@/components/navbar";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useAccount } from 'wagmi';
+import { getUserByWallet } from '@/components/walletAddress';
 
 export default function Profile() {
+    const { address, isConnected } = useAccount();
     const [copied, setCopied] = useState(false);
-    const [username, setUsername] = useState("Deannie");
+    const [username, setUsername] = useState('');
     const [editing, setEditing] = useState(false);
-    const [tempName, setTempName] = useState(username);
+    const [tempName, setTempName] = useState('');
+
+    useEffect(() => {
+        async function fetchUsername() {
+            if (isConnected && address) {
+                const user = await getUserByWallet(address);
+                setUsername(user?.username || '');
+                setTempName(user?.username || '');
+            }
+        }
+        fetchUsername();
+    }, [isConnected, address]);
 
     const handleCopy = (address: string) => {
         navigator.clipboard.writeText(address);
@@ -17,7 +31,13 @@ export default function Profile() {
         setTimeout(() => setCopied(false), 1200);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        // Save username to database
+        await fetch('/api/user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ wallet_address: address, username: tempName }),
+        });
         setUsername(tempName);
         setEditing(false);
     };

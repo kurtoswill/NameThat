@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
-import { BaseWalletAddress as WalletAddress } from "./walletAddress"; // <-- Import the shared WalletAddress
+import { WalletAddressWithUserSync as WalletAddress } from "@/components/walletAddress"; // <-- Import the shared WalletAddress
 
 // Placeholder Logo
 const Logo = () => (
