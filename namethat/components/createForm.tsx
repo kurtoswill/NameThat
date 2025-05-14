@@ -15,7 +15,7 @@ const CATEGORY_OPTIONS = [
   "Technology",
   "Sports",
   "Music",
-  "Movies",
+  "Movies", 
   "Art",
   "Nature",
   "Food",
@@ -486,3 +486,4 @@ export default function CreateForm() {
     </>
   );
 }
+
