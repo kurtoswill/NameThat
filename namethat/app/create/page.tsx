@@ -23,11 +23,10 @@ export default function Create() {
             >
                 {/* No header here, navbar handles logo and wallet */}
                 <section>
-                    <h1 className='text-[42px] md:text-[56px] font-semibold mt-[20px] text-pink'>Upload</h1>
-                    <p className='text-[15px] md:text-[20px]'>Bring your idea to life — upload an image or a GIF, suggest a name, and let the community make it unforgettable.</p>
+                    <h1 className='text-[42px] md:text-[56px] font-semibold text-pink'>Upload</h1>
                 </section>
 
-                <hr className='h-[3px] bg-blue mt-[40px]' />
+                <hr className='h-[3px] bg-blue mt-[20px]' />
 
                 <CreateForm />
             </main>

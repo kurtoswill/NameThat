@@ -63,7 +63,7 @@ export default function PostPage() {
         "
       >
         <section>
-          <h1 className="text-[42px] md:text-[56px] font-semibold mt-[20px] text-pink">
+          <h1 className="text-[42px] md:text-[56px] font-semibold text-pink">
             Vote
           </h1>
         </section>
