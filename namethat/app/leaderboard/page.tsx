@@ -6,7 +6,7 @@ export default function Leaderboard() {
   const leaderboardData = [
     {
       rank: 1,
-      name: "Sung Jin Woo",
+      name: "Sung Jin Woo | NFT",
       votes: "133,321,043",
       img: "/images/JinWoo.jpg",
       icon: "/icons/gold.png",
@@ -14,7 +14,7 @@ export default function Leaderboard() {
     },
     {
       rank: 2,
-      name: "Leo Natsume",
+      name: "Leo Natsume | User",
       votes: "100,121,483",
       img: "/images/LeoNatsume.jpg",
       icon: "/icons/silver.png",
@@ -22,7 +22,7 @@ export default function Leaderboard() {
     },
     {
       rank: 3,
-      name: "Beat Killer",
+      name: "Beat Killer | User",
       votes: "100,121,483",
       img: "/images/Beast.jpg",
       icon: "/icons/bronze.png",

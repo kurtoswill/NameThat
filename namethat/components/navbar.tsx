@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
-import { BaseWalletAddress as WalletAddress } from "./walletAddress"; // <-- Import the shared WalletAddress
+import { WalletAddressWithUserSync as WalletAddress } from "@/components/walletAddress"; // <-- Import the shared WalletAddress
 
 // Placeholder Logo
 const Logo = () => (
@@ -74,9 +74,8 @@ export default function ResponsiveNavbar() {
               <Link
                 key={name}
                 href={href}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-blue font-semibold text-[16px] hover:bg-blue/10 transition ${
-                  isActive(href) ? "text-pink" : ""
-                }`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-blue font-semibold text-[16px] hover:bg-blue/10 transition ${isActive(href) ? "text-pink" : ""
+                  }`}
               >
                 <Icon className="w-6 h-6" />
                 <span>{name}</span>
@@ -115,17 +114,15 @@ export default function ResponsiveNavbar() {
         {/* Home */}
         <Link href="/" aria-label="Home">
           <HomeIcon
-            className={`w-7 h-7 text-white cursor-pointer ${
-              isActive("/") ? "opacity-100" : "opacity-60"
-            }`}
+            className={`w-7 h-7 text-white cursor-pointer ${isActive("/") ? "opacity-100" : "opacity-60"
+              }`}
           />
         </Link>
         {/* Explore */}
         <Link href="/explore" aria-label="Explore">
           <ExploreIcon
-            className={`w-7 h-7 text-white cursor-pointer ${
-              isActive("/explore") ? "opacity-100" : "opacity-60"
-            }`}
+            className={`w-7 h-7 text-white cursor-pointer ${isActive("/explore") ? "opacity-100" : "opacity-60"
+              }`}
           />
         </Link>
         {/* Create (centered and bigger) */}
@@ -139,17 +136,15 @@ export default function ResponsiveNavbar() {
         {/* Leaderboards */}
         <Link href="/leaderboard" aria-label="Leaderboards">
           <LeaderboardIcon
-            className={`w-7 h-7 text-white cursor-pointer ${
-              isActive("/leaderboard") ? "opacity-100" : "opacity-60"
-            }`}
+            className={`w-7 h-7 text-white cursor-pointer ${isActive("/leaderboard") ? "opacity-100" : "opacity-60"
+              }`}
           />
         </Link>
         {/* Profile */}
         <Link href="/profile" aria-label="Profile">
           <ProfileIcon
-            className={`w-7 h-7 text-white cursor-pointer ${
-              isActive("/profile") ? "opacity-100" : "opacity-60"
-            }`}
+            className={`w-7 h-7 text-white cursor-pointer ${isActive("/profile") ? "opacity-100" : "opacity-60"
+              }`}
           />
         </Link>
         {/* WalletAddress removed from here */}
