@@ -3,59 +3,57 @@
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 // Removed: import { useOnchainKit } from "@coinbase/onchainkit/minikit";
 
-console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-console.log('Supabase ANON KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
 const supabase = createClientComponentClient();
 
-// Diagnostic: List all buckets at runtime
-supabase.storage.listBuckets().then(({ data, error }) => {
-  if (error) {
-    console.error('Error listing buckets:', error);
-  } else {
-    console.log('Supabase buckets visible to this client:', data?.map(b => b.name));
-  }
-});
-
 export async function handleUploadAndSavePost({
-  imageUrl, // now expects a string URL
+  file,
   caption,
   mode,
-  categories,
+  category,
   walletAddress,
 }: {
-  imageUrl: string; // changed from file: File to imageUrl: string
+  file: File;
   caption: string;
   mode: "open" | "vote_only" | "hybrid";
-  categories: string[];
+  category: string;
   walletAddress: string;
-}): Promise<{ error?: string } | void> {
+}) {
   try {
     if (!walletAddress) {
-      return { error: "Please connect your wallet." };
+      alert("Please connect your wallet.");
+      return;
     }
-    if (!imageUrl) {
-      return { error: "Please select an image URL." };
+
+    const filename = `${walletAddress}-${Date.now()}-${file.name}`;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("post_uploads")
+      .upload(`user-uploads/${filename}`, file);
+
+    if (uploadError) {
+      console.error("Upload failed:", uploadError);
+      alert("Image upload failed.");
+      return;
     }
-    // Directly insert the image URL into the nfts table
-    const { error: insertError } = await supabase.from("nfts").insert({
-      user_id: walletAddress,
+
+    const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/post_uploads/${uploadData.path}`;
+
+    const { error: insertError } = await supabase.from("posts").insert({
+      wallet_address: walletAddress,
       image_url: imageUrl,
-      name: null, // Name is null, to be voted on later
       caption,
-      categories,
-      votes: 0,
-      status: 'public',
-      submission_type: mode,
+      mode,
+      category,
     });
+
     if (insertError) {
-      console.error("NFT insert failed:", insertError);
-      return { error: insertError.message || "Could not save NFT to database." };
+      console.error("Post insert failed:", insertError);
+      alert("Could not save post to database.");
+      return;
     }
-    // Success, no error
-    return;
-  } catch (e) {
-    console.error("Unexpected error:", e);
-    return { error: (e instanceof Error ? e.message : "Something went wrong. Please try again.") };
+
+    alert("Post uploaded successfully!");
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    alert("Something went wrong. Please try again.");
   }
 }

@@ -15,7 +15,7 @@ const CATEGORY_OPTIONS = [
   "Technology",
   "Sports",
   "Music",
-  "Movies",
+  "Movies", 
   "Art",
   "Nature",
   "Food",
@@ -38,8 +38,6 @@ export default function CreateForm() {
   const [showCrop, setShowCrop] = useState(false);
   const [rawImage, setRawImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formMessage, setFormMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
-  const [mounted, setMounted] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -116,9 +114,6 @@ export default function CreateForm() {
       setRawImage(url);
       setShowCrop(true);
       setFile(file);
-      setIsSubmitting(false); // Reset submitting state
-      setSubmitted(false);   // Reset submitted state
-      setFormMessage(null);  // Clear any previous error
     }
   };
 
@@ -134,54 +129,51 @@ export default function CreateForm() {
     e.preventDefault();
     setSubmitted(true);
     setIsSubmitting(true);
-    setFormMessage(null);
+
+    let hasError = false;
 
     if (!file) {
-      setFormMessage({ type: 'error', text: 'Please upload an image.' });
-      setIsSubmitting(false);
-      return;
+      hasError = true;
     }
 
     if (!caption.trim()) {
-      setFormMessage({ type: 'error', text: 'Please add a caption.' });
+      alert("Please add a caption.");
       setIsSubmitting(false);
       return;
     }
 
     if (mode !== "open") {
       if (options.length === 0 || options.some(opt => !opt.trim())) {
-        setFormMessage({ type: 'error', text: 'Please provide at least one option and fill all option fields.' });
+        alert("Please provide at least one option and fill all option fields.");
         setIsSubmitting(false);
         return;
       }
     }
 
     if (categories.length === 0) {
-      setFormMessage({ type: 'error', text: 'Please select at least one category.' });
+      hasError = true;
+    }
+
+    if (hasError) {
       setIsSubmitting(false);
       return;
     }
 
     if (!walletAddress) {
-      setFormMessage({ type: 'error', text: 'Please connect your wallet.' });
+      alert("Please connect your wallet.");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      const result = await handleUploadAndSavePost({
-        imageUrl: previewUrl as string,
+      await handleUploadAndSavePost({
+        file: file as File,
         caption,
         mode,
-        categories,
+        category: categories.join(", "),
         walletAddress,
       });
-      if (result?.error) {
-        setFormMessage({ type: 'error', text: result.error });
-        setIsSubmitting(false);
-        return;
-      }
-      setFormMessage({ type: 'success', text: 'Post has been uploaded successfully!' });
+      alert("Post has been uploaded successfully!");
       setFile(null);
       setCaption("");
       setMode("open");
@@ -192,16 +184,13 @@ export default function CreateForm() {
       setCategoryDropdownOpen(false);
       setSubmitted(false);
       setIsSubmitting(false);
-      setTimeout(() => router.push("/explore"), 1200);
-    } catch {
-      setFormMessage({ type: 'error', text: 'Error uploading post. Please try again.' });
+      router.push("/explore");
+    } catch (error) {
+      console.error("Error uploading post:", error);
+      alert("Failed to upload post. Please try again.");
       setIsSubmitting(false);
     }
   };
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Display selected categories as comma separated text or placeholder
   const selectedCategoriesText =
@@ -210,13 +199,6 @@ export default function CreateForm() {
   return (
     <>
       <form className="flex flex-col md:flex-row gap-8 mt-10" onSubmit={handleSubmit}>
-        {/* Show form message */}
-        {formMessage && (
-          <div className={`w-full text-center py-2 rounded-lg mb-4 ${formMessage.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50 }}>
-            {formMessage.text}
-          </div>
-        )}
         {/* Left: Upload and Preview */}
         <div className="w-full md:w-1/2 flex flex-col items-center">
           <label
@@ -265,6 +247,7 @@ export default function CreateForm() {
             accept="image/*"
             className="hidden"
             onChange={handleFileChange}
+            required
           />
           {showCrop && rawImage && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
@@ -370,8 +353,8 @@ export default function CreateForm() {
                       <li
                         key={category}
                         className={`flex items-center gap-3 px-4 py-2 rounded-lg transition cursor-pointer select-none group ${checked
-                          ? "bg-blue/10 text-blue font-semibold"
-                          : "hover:bg-blue/5 text-black"
+                            ? "bg-blue/10 text-blue font-semibold"
+                            : "hover:bg-blue/5 text-black"
                           } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                         onClick={() => {
                           if (!disabled) toggleCategory(category);
@@ -495,7 +478,7 @@ export default function CreateForm() {
               ) : (
                 <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
               )}
-              <span>{isSubmitting ? "Submitting..." : (!mounted ? "" : (walletAddress ? "Submit Entry" : "Connect Wallet to Submit"))}</span>
+              <span>{isSubmitting ? "Submitting..." : (walletAddress ? "Submit Entry" : "Connect Wallet to Submit")}</span>
             </button>
           </div>
         </div>
@@ -503,3 +486,4 @@ export default function CreateForm() {
     </>
   );
 }
+
