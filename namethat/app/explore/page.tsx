@@ -156,7 +156,7 @@ export default function Explore() {
             nfts.map((nft) => (
               <Link
                 key={nft.id}
-                href={`/explore/${nft.id}`}
+                href={`/post/${nft.id}`}
                 className="rounded-xl overflow-hidden shadow-md bg-white aspect-square block hover:scale-105 transition"
               >
                 <Image

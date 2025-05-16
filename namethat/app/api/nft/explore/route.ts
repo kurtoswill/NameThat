@@ -1,9 +1,25 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-// GET /api/nft/explore
-export async function GET() {
-  // Fetch ALL NFTs, no status filter, always in sync with database
+// GET /api/nft/explore or /api/nft/explore?id=xxx
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const nftId = searchParams.get('id');
+
+  if (nftId) {
+    // Fetch a single NFT by id
+    const { data, error } = await supabase
+      .from('nfts')
+      .select('*')
+      .eq('id', nftId)
+      .single();
+    if (error || !data) {
+      return NextResponse.json({ error: error?.message || 'Not found' }, { status: 404 });
+    }
+    return NextResponse.json({ nft: data });
+  }
+
+  // Fetch ALL NFTs
   const { data, error } = await supabase
     .from('nfts')
     .select('*')
