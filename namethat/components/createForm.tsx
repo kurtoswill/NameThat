@@ -87,15 +87,7 @@ export default function CreateForm() {
     }
   };
 
-  const handleOptionChange = (idx: number, value: string) => {
-    const newOptions = [...options];
-    newOptions[idx] = value;
-    setOptions(newOptions);
-  };
 
-  const addOption = () => {
-    setOptions([...options, ""]);
-  };
 
   const removeOption = (idx: number) => {
     tempSuggestions.current = tempSuggestions.current.filter((_, i) => i !== idx);

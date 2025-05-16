@@ -70,8 +70,8 @@ export async function handleUploadAndSavePost({
       categories: category.split(",").map((c) => c.trim()).filter(Boolean),
       votes: 0,
       status: "new", // always set to 'new' on creation
-      // submission_type: mode, // removed, not in schema
       created_at: new Date().toISOString(),
+      suggestion_text: (mode === "vote_only" || mode === "hybrid") ? validOptions : undefined, // Save uploader options as array
     };
     const cleanInsertObj = Object.fromEntries(Object.entries(insertObj).filter(([, value]) => value !== undefined && value !== null));
     const { data: nftInsertData, error: insertError } = await supabase.from("nfts").insert(cleanInsertObj).select("id");

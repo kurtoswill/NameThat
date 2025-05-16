@@ -11,15 +11,7 @@ const config = getDefaultConfig({
   appName: "NameThat",
   projectId: "a67a9a502f078068327f58a05fb359e1",
   chains: [base],
-  ssr: false,
-  walletConnectParameters: {
-    metadata: {
-      name: "NameThat",
-      description: "NameThat NFT Dapp",
-      url: "http://localhost:3000", // Use your site root, not a dynamic or post URL
-      icons: ["/icons/leaderboard.svg"]
-    }
-  }
+  ssr: false
 });
 
 const queryClient = new QueryClient();

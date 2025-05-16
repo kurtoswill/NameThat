@@ -33,7 +33,7 @@ export default function PostDetail() {
                 const json = await res.json();
                 if (json.nft) setNft(json.nft);
                 else setNft(null);
-            } catch (err) {
+            } catch {
                 setNft(null);
             }
             setLoading(false);

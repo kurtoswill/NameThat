@@ -2,15 +2,9 @@
 
 import Filter from "@/components/filter";
 import ResponsiveNavbar from "@/components/navbar";
-import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-);
 
 export default function Explore() {
   interface NFT {
@@ -54,19 +48,31 @@ export default function Explore() {
     setTimeout(() => setShowFilter(false), 200); // match transition duration
   };
 
-  useEffect(() => {
-    async function fetchNFTs() {
-      setLoading(true);
-      try {
-        const res = await fetch("/api/nft/explore");
-        const json = await res.json();
+  // Polling interval in milliseconds
+  const POLL_INTERVAL = 15000; // 15 seconds
+
+  // Fetch NFTs function (shared by both effects)
+  const fetchNFTs = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/nft/explore");
+      const json = await res.json();
+      // Only update if data changed
+      if (JSON.stringify(json.nfts) !== JSON.stringify(nfts)) {
         setNfts(json.nfts || []);
-      } catch (e) {
-        setNfts([]);
       }
-      setLoading(false);
+    } catch {
+      setNfts([]);
     }
+    setLoading(false);
+  };
+
+  // Initial fetch and polling for auto-refresh
+  useEffect(() => {
     fetchNFTs();
+    const interval = setInterval(fetchNFTs, POLL_INTERVAL);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
