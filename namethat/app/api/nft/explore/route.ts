@@ -3,10 +3,10 @@ import { supabase } from '@/lib/supabase';
 
 // GET /api/nft/explore
 export async function GET() {
+  // Fetch ALL NFTs, no status filter, always in sync with database
   const { data, error } = await supabase
     .from('nfts')
     .select('*')
-    .eq('status', 'public')
     .order('created_at', { ascending: false });
 
   if (error) {

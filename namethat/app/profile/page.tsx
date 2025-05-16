@@ -1,7 +1,6 @@
 "use client";
 
 import ResponsiveNavbar from "@/components/navbar";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { useAccount } from 'wagmi';

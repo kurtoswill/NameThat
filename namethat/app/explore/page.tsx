@@ -13,15 +13,20 @@ const supabase = createClient(
 );
 
 export default function Explore() {
-  interface Post {
+  interface NFT {
     id: string;
     image_url: string;
-    caption?: string;
+    name: string;
+    caption: string;
+    categories: string[];
+    votes: number;
+    status: string;
+    submission_type: string;
     created_at: string;
-    // Add other fields as needed based on your 'posts' table
+    user_id: string;
   }
 
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [nfts, setNfts] = useState<NFT[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
   const [filterVisible, setFilterVisible] = useState(false);
@@ -50,16 +55,18 @@ export default function Explore() {
   };
 
   useEffect(() => {
-    async function fetchPosts() {
+    async function fetchNFTs() {
       setLoading(true);
-      const { data } = await supabase
-        .from("posts")
-        .select("*")
-        .order("created_at", { ascending: false });
-      setPosts(data || []);
+      try {
+        const res = await fetch("/api/nft/explore");
+        const json = await res.json();
+        setNfts(json.nfts || []);
+      } catch (e) {
+        setNfts([]);
+      }
       setLoading(false);
     }
-    fetchPosts();
+    fetchNFTs();
   }, []);
 
   useEffect(() => {
@@ -141,20 +148,20 @@ export default function Explore() {
             <div className="col-span-full text-center text-blue">
               Loading...
             </div>
-          ) : posts.length === 0 ? (
+          ) : nfts.length === 0 ? (
             <div className="col-span-full text-center text-gray-400">
               No posts yet.
             </div>
           ) : (
-            posts.map((post) => (
+            nfts.map((nft) => (
               <Link
-                key={post.id}
-                href={`/explore/${post.id}`}
+                key={nft.id}
+                href={`/explore/${nft.id}`}
                 className="rounded-xl overflow-hidden shadow-md bg-white aspect-square block hover:scale-105 transition"
               >
                 <Image
-                  src={post.image_url}
-                  alt={post.caption || "NFT"}
+                  src={nft.image_url}
+                  alt={nft.caption || nft.name || "NFT"}
                   width={300}
                   height={300}
                   className="w-full h-full object-cover"

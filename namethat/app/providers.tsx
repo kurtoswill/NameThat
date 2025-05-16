@@ -5,6 +5,7 @@ import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { base } from "wagmi/chains";
 import { ReactNode } from "react";
+import { ToastProvider } from "@/components/ui/ToastProvider";
 
 const config = getDefaultConfig({
   appName: "NameThat",
@@ -20,7 +21,9 @@ export function Providers({ children }: { children: ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
