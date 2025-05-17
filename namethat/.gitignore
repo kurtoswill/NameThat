@@ -19,7 +19,6 @@
 # misc
 .DS_Store
 *.pem
-table-properties.txt
 
 # debug
 npm-debug.log*
