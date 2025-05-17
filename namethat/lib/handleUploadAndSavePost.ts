@@ -66,7 +66,9 @@ export async function handleUploadAndSavePost({
       image_url: imageUrl,
       name: "", // Set to empty string to satisfy NOT NULL constraint
       caption,
-      categories: category.split(",").map((c) => c.trim()).filter(Boolean),
+      categories: Array.isArray(category)
+        ? category
+        : category.split(",").map((c) => c.trim()).filter(Boolean),
       votes: 0,
       status: "new", // always set to 'new' on creation
       created_at: new Date().toISOString(),
@@ -79,17 +81,17 @@ export async function handleUploadAndSavePost({
       await supabase.storage.from("post-uploads").remove([`user-uploads/${filename}`]);
       return { success: false, error: `Could not save post to database: ${insertError ? insertError.message : 'Unknown error'}` };
     }
-    // If vote_only or hybrid, insert suggestions into suggestions table
+    // If vote_only or hybrid, insert all options as an array in a single suggestions row
     if ((mode === "vote_only" || mode === "hybrid") && validOptions && validOptions.length >= 2 && nftInsertData && nftInsertData[0]?.id) {
       const nft_id = nftInsertData[0].id;
-      const suggestionRows = validOptions.map((suggestion_text) => ({
+      const suggestionRow = {
         user_id: user_id ?? undefined,
         nft_id,
-        suggestion_text: String(suggestion_text),
+        suggestion_text: validOptions, // Store all options as an array in one row
         votes: 0,
         created_at: new Date().toISOString(),
-      }));
-      const { error: suggestionError } = await supabase.from("suggestions").insert(suggestionRows);
+      };
+      const { error: suggestionError } = await supabase.from("suggestions").insert([suggestionRow]);
       if (suggestionError) {
         // If suggestions insert fails, clean up NFT and image
         await supabase.from("nfts").delete().eq("id", nft_id);
