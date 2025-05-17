@@ -1,31 +1,52 @@
 "use client";
 
-import ResponsiveNavbar from '@/components/navbar'
-import Image from 'next/image'
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import ResponsiveNavbar from "@/components/navbar";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Explore() {
   interface NFT {
     id: string;
     image_url: string;
     name: string;
-    caption?: string;
+    caption: string;
+    categories: string[];
+    votes: number;
+    status: string;
+    submission_type: string;
     created_at: string;
+    user_id: string;
   }
 
   const [nfts, setNfts] = useState<NFT[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchNFTs() {
-      setLoading(true);
-      const res = await fetch('/api/nft/explore');
-      const { nfts } = await res.json();
-      setNfts(nfts || []);
-      setLoading(false);
+  // Polling interval in milliseconds
+  const POLL_INTERVAL = 15000; // 15 seconds
+
+  // Fetch NFTs function (shared by both effects)
+  const fetchNFTs = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/nft/explore");
+      const json = await res.json();
+      // Only update if data changed
+      if (JSON.stringify(json.nfts) !== JSON.stringify(nfts)) {
+        setNfts(json.nfts || []);
+      }
+    } catch {
+      setNfts([]);
     }
+    setLoading(false);
+  };
+
+  // Initial fetch and polling for auto-refresh
+  useEffect(() => {
     fetchNFTs();
+    const interval = setInterval(fetchNFTs, POLL_INTERVAL);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -51,19 +72,23 @@ export default function Explore() {
         </section>
         <section className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-20 mt-5">
           {loading ? (
-            <div className="col-span-full text-center text-blue">Loading...</div>
+            <div className="col-span-full text-center text-blue">
+              Loading...
+            </div>
           ) : nfts.length === 0 ? (
-            <div className="col-span-full text-center text-gray-400">No NFTs yet.</div>
+            <div className="col-span-full text-center text-gray-400">
+              No posts yet.
+            </div>
           ) : (
             nfts.map((nft) => (
               <Link
                 key={nft.id}
-                href={`/explore/${nft.id}`}
+                href={`/post/${nft.id}`}
                 className="rounded-xl overflow-hidden shadow-md bg-white aspect-square block hover:scale-105 transition"
               >
                 <Image
                   src={nft.image_url}
-                  alt={nft.caption || nft.name}
+                  alt={nft.caption || nft.name || "NFT"}
                   width={300}
                   height={300}
                   className="w-full h-full object-cover"

@@ -6,6 +6,11 @@ const nextConfig = {
     config.externals.push("pino-pretty", "lokijs", "encoding");
     return config;
   },
+  images: {
+    domains: [
+      "elfvxyrlaslnfyfxaxoi.supabase.co",
+    ],
+  },
 };
 
 export default nextConfig;

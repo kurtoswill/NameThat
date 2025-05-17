@@ -28,13 +28,37 @@ export default function Leaderboard() {
       icon: "/icons/bronze.png",
       color: "text-bronze",
     },
-    ...Array.from({ length: 7 }).map((_, i) => ({
-      rank: i + 4,
-      name: "Beat Killer",
-      votes: "100,121,483",
-      img: "/images/Beast.jpg",
-      color: "text-darkSilver",
-    })),
+    ...Array.from({ length: 7 }).map((_, i) => {
+      const names = [
+        "Agent J",
+        "Killua Zoldyck",
+        "Walter White",
+        "Yuki Onna",
+        "Gentle Monster",
+        "Orange Ape",
+        "Frizeess"
+      ];
+      const images = [
+        "/images/AgentJ.jpg",
+        "/images/Killua.jpg",
+        "/images/WalterWhite.jpg",
+        "/images/Yuki.gif",
+        "/images/GentleMonster.jpg",
+        "/images/OrangeApe.png",
+        "/images/Frizeess.jpg"
+      ];
+      // Sequentially decreasing votes for ranks 4-10
+      const baseVotes = 100121483;
+      const votes = (baseVotes - (i * 1000000)).toLocaleString();
+      return {
+        rank: i + 4,
+        name: names[i],
+        votes: votes,
+        img: images[i],
+        icon: "",
+        color: "text-darkSilver",
+      };
+    }),
   ];
 
   const getRowGradient = (rank: number) => {

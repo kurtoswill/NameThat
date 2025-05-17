@@ -54,4 +54,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ user: newUser });
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> create

@@ -9,13 +9,14 @@ import type { Area } from "react-easy-crop";
 import Cropper from "react-easy-crop";
 import { useAccount } from "wagmi";
 import getCroppedImg from "../utils/cropImage";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const CATEGORY_OPTIONS = [
   "Animals",
   "Technology",
   "Sports",
   "Music",
-  "Movies", 
+  "Movies",
   "Art",
   "Nature",
   "Food",
@@ -31,7 +32,8 @@ export default function CreateForm() {
   const [categories, setCategories] = useState<string[]>([]);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [options, setOptions] = useState<string[]>([""]);
+  const [options, setOptions] = useState<string[]>([]);
+  const [suggestionInput, setSuggestionInput] = useState("");
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
@@ -44,6 +46,10 @@ export default function CreateForm() {
 
   const { openConnectModal } = useConnectModal();
   const { address: walletAddress } = useAccount();
+  const toast = useToast();
+
+  // Use a temporary array to store suggestions before submit
+  const tempSuggestions = useRef<string[]>([]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -81,25 +87,17 @@ export default function CreateForm() {
     }
   };
 
-  const handleOptionChange = (idx: number, value: string) => {
-    const newOptions = [...options];
-    newOptions[idx] = value;
-    setOptions(newOptions);
-  };
 
-  const addOption = () => {
-    setOptions([...options, ""]);
-  };
 
   const removeOption = (idx: number) => {
-    if (options.length === 1) return;
-    const newOptions = options.filter((_, i) => i !== idx);
-    setOptions(newOptions);
+    tempSuggestions.current = tempSuggestions.current.filter((_, i) => i !== idx);
+    setOptions([...tempSuggestions.current]);
   };
 
   useEffect(() => {
     if (mode === "open") {
-      setOptions([""]);
+      tempSuggestions.current = [];
+      setOptions([]);
     }
   }, [mode]);
 
@@ -125,6 +123,7 @@ export default function CreateForm() {
     setFile(new File([croppedBlob], file?.name || "cropped.png", { type: croppedBlob.type }));
   };
 
+  // On submit, always use tempSuggestions.current for options
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
@@ -137,14 +136,19 @@ export default function CreateForm() {
     }
 
     if (!caption.trim()) {
-      alert("Please add a caption.");
+      toast.showToast("Please add a caption.", "error");
       setIsSubmitting(false);
       return;
     }
 
     if (mode !== "open") {
-      if (options.length === 0 || options.some(opt => !opt.trim())) {
-        alert("Please provide at least one option and fill all option fields.");
+      if (tempSuggestions.current.length < 2) {
+        toast.showToast("You must provide at least 2 options for vote only mode.", "error");
+        setIsSubmitting(false);
+        return;
+      }
+      if (tempSuggestions.current.some(opt => !opt.trim())) {
+        toast.showToast("All options must be filled in and not empty.", "error");
         setIsSubmitting(false);
         return;
       }
@@ -156,29 +160,37 @@ export default function CreateForm() {
 
     if (hasError) {
       setIsSubmitting(false);
+      toast.showToast("Please select a file and at least one category.", "error");
       return;
     }
 
     if (!walletAddress) {
-      alert("Please connect your wallet.");
+      toast.showToast("Please connect your wallet.", "error");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      await handleUploadAndSavePost({
+      const result = await handleUploadAndSavePost({
         file: file as File,
         caption,
         mode,
         category: categories.join(", "),
         walletAddress,
+        options: [...tempSuggestions.current],
       });
-      alert("Post has been uploaded successfully!");
+      if (!result.success) {
+        toast.showToast(result.error || "Failed to upload post.", "error");
+        setIsSubmitting(false);
+        return;
+      }
+      toast.showToast("Post has been uploaded successfully!", "success");
       setFile(null);
       setCaption("");
       setMode("open");
       setCategories([]);
-      setOptions([""]);
+      tempSuggestions.current = [];
+      setOptions([]);
       (document.getElementById("upload") as HTMLInputElement).value = "";
       setPreviewUrl(null);
       setCategoryDropdownOpen(false);
@@ -187,9 +199,18 @@ export default function CreateForm() {
       router.push("/explore");
     } catch (error) {
       console.error("Error uploading post:", error);
-      alert("Failed to upload post. Please try again.");
+      toast.showToast("Failed to upload post. Please try again.", "error");
       setIsSubmitting(false);
     }
+  };
+
+  const handleAddSuggestion = () => {
+    const trimmed = suggestionInput.trim();
+    if (!trimmed) return;
+    if (tempSuggestions.current.includes(trimmed)) return;
+    tempSuggestions.current = [...tempSuggestions.current, trimmed];
+    setOptions([...tempSuggestions.current]);
+    setSuggestionInput("");
   };
 
   // Display selected categories as comma separated text or placeholder
@@ -353,8 +374,8 @@ export default function CreateForm() {
                       <li
                         key={category}
                         className={`flex items-center gap-3 px-4 py-2 rounded-lg transition cursor-pointer select-none group ${checked
-                            ? "bg-blue/10 text-blue font-semibold"
-                            : "hover:bg-blue/5 text-black"
+                          ? "bg-blue/10 text-blue font-semibold"
+                          : "hover:bg-blue/5 text-black"
                           } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                         onClick={() => {
                           if (!disabled) toggleCategory(category);
@@ -420,37 +441,50 @@ export default function CreateForm() {
             {/* Show options for vote_only/hybrid */}
             {(mode === "vote_only" || mode === "hybrid") && (
               <div className="flex flex-col gap-2 mb-2">
-                {options.map((opt, idx) => (
-                  <div key={idx} className="flex items-center gap-2 group bg-blue/5 rounded-lg px-2 py-1">
-                    <span className="w-8 text-right text-blue font-bold">{idx + 1}.</span>
-                    <input
-                      type="text"
-                      className="flex-1 p-3 border-2 border-blue text-black placeholder:text-blue rounded-lg focus:outline-none focus:ring-2 focus:ring-blue text-[16px]"
-                      placeholder={`Option ${idx + 1}`}
-                      value={opt}
-                      onChange={e => handleOptionChange(idx, e.target.value)}
-                      required
-                    />
-                    {options.length > 1 && (
-                      <button
-                        type="button"
-                        className="ml-1 text-red-500 hover:text-red-700 text-lg font-bold px-2 py-1 rounded-full transition-opacity opacity-80 group-hover:opacity-100"
-                        onClick={() => removeOption(idx)}
-                        aria-label={`Remove option ${idx + 1}`}
-                      >
-                        ×
-                      </button>
-                    )}
+                {/* New suggestion input system */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    className="flex-1 p-3 border-2 border-blue text-black placeholder:text-blue rounded-lg focus:outline-none focus:ring-2 focus:ring-blue text-[16px]"
+                    placeholder="Type a suggestion and press +"
+                    value={suggestionInput}
+                    onChange={e => setSuggestionInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === '+') {
+                        e.preventDefault();
+                        handleAddSuggestion();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="bg-blue text-white rounded-lg px-3 py-2 font-bold text-lg hover:bg-blue/80 transition disabled:opacity-50"
+                    onClick={handleAddSuggestion}
+                    disabled={!suggestionInput.trim()}
+                    aria-label="Add suggestion"
+                  >
+                    +
+                  </button>
+                </div>
+                {/* List of added suggestions */}
+                {options.length > 0 && (
+                  <div className="flex flex-col gap-1 mt-2">
+                    {options.map((opt, idx) => (
+                      <div key={idx} className="flex items-center gap-2 group bg-blue/5 rounded-lg px-2 py-1">
+                        <span className="w-8 text-right text-blue font-bold">{idx + 1}.</span>
+                        <span className="flex-1 text-blue text-[16px]">{opt}</span>
+                        <button
+                          type="button"
+                          className="ml-1 text-red-500 hover:text-red-700 text-lg font-bold px-2 py-1 rounded-full transition-opacity opacity-80 group-hover:opacity-100"
+                          onClick={() => removeOption(idx)}
+                          aria-label={`Remove option ${idx + 1}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-                <button
-                  type="button"
-                  className="mt-2 px-4 py-2 bg-blue text-white rounded-lg hover:bg-blue/80 transition w-fit self-start flex items-center gap-2 shadow-sm"
-                  onClick={addOption}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                  Add Option
-                </button>
+                )}
               </div>
             )}
           </div>
@@ -466,7 +500,7 @@ export default function CreateForm() {
                   if (openConnectModal) {
                     openConnectModal();
                   } else {
-                    alert("No wallet connection modal available");
+                    toast.showToast("No wallet connection modal available", "error");
                   }
                 }
               }}
@@ -486,4 +520,3 @@ export default function CreateForm() {
     </>
   );
 }
-
