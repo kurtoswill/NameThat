@@ -1,0 +1,18 @@
+users
+id: uuid; wallet_address: text; username: text; avatar_url: text; earnings: numeric; created_at: timestamp
+
+nfts
+id: uuid; user_id(users.id): uuid; image_url: text; name: text; caption: text; categories: text[]; votes: integer; status: text; submission_type: text; created_at: timestamp
+
+votes
+id: uuid; user_id(users.id): uuid; nft_id(nfts.id): uuid; created_at: timestamp
+
+suggestions
+id: uuid; user_id(users.id): uuid; nft_id(nfts.id): uuid; suggestion_text: text; votes: integer; created_at: timestamp
+
+user_stats
+user_id(users.id): uuid; uploaded_images: integer; suggestions_won: integer; suggestions_given: integer; winning_entries: integer; nfts_owned: integer
+
+
+Bucket:
+post-uploads
