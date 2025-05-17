@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
         .single();
 
     if (insertError) {
+        console.error('User insert error:', insertError); // Log error for debugging
         return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 

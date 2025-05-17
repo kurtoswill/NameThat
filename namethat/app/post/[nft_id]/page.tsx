@@ -18,7 +18,6 @@ interface NFT {
   caption?: string;
   mode: "open" | "vote_only" | "hybrid";
   options: Option[];
-  suggestion_text?: string[]; // now an array
   created_at: string;
   // ...other fields
 }
@@ -42,32 +41,26 @@ export default function PostPage() {
         const json = await res.json();
         if (json.nft) {
           setNft(json.nft);
-          // --- Option logic for all modes ---
-          if (json.nft.mode === "vote_only") {
-              // Only uploader's options (from suggestion_text array)
-            if (Array.isArray(json.nft.suggestion_text) && json.nft.suggestion_text.length > 0) {
-              setOptions(json.nft.suggestion_text.map((text: string, idx: number) => ({
-                id: idx + 1,
-                name: text,
-                votes: 0,
-              })));
-            } else {
-              setOptions([]);
-            }
-          } else if (json.nft.mode === "open") {
-            // Only user suggestions (start empty, or from DB if available)
-            setOptions([]); // User suggestions will be added client-side
-          } else if (json.nft.mode === "hybrid") {
-            // Both uploader's and user suggestions
-            let uploaderOptions: Option[] = [];
-            if (Array.isArray(json.nft.suggestion_text) && json.nft.suggestion_text.length > 0) {
-              uploaderOptions = json.nft.suggestion_text.map((text: string, idx: number) => ({
-                id: `uploader-${idx + 1}`,
-                name: text,
-                votes: 0,
+          // Fetch uploader suggestions from suggestions table for this nft_id
+          let uploaderOptions: Option[] = [];
+          if (json.nft.mode === "vote_only" || json.nft.mode === "hybrid") {
+            const suggRes = await fetch(`/api/nft/suggestions?nft_id=${nft_id}`);
+            const suggJson = await suggRes.json();
+            if (Array.isArray(suggJson.suggestions)) {
+              type Suggestion = { id: string; suggestion_text: string; votes: number };
+              uploaderOptions = (suggJson.suggestions as Suggestion[]).map((s, idx) => ({
+                id: s.id || idx + 1,
+                name: s.suggestion_text,
+                votes: s.votes || 0,
               }));
             }
+          }
+          if (json.nft.mode === "vote_only") {
             setOptions(uploaderOptions);
+          } else if (json.nft.mode === "open") {
+            setOptions([]); // User suggestions will be added client-side
+          } else if (json.nft.mode === "hybrid") {
+            setOptions(uploaderOptions); // Start with uploader's options, user can add more
           } else {
             setOptions([]);
           }

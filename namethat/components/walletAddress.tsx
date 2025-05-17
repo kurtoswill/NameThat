@@ -96,6 +96,7 @@ export function WalletAddressWithUserSync() {
   const [showUsernameModal, setShowUsernameModal] = useState(false);
   const [username, setUsername] = useState("");
   const [userChecked, setUserChecked] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isConnected && address && !userChecked) {
@@ -125,12 +126,18 @@ export function WalletAddressWithUserSync() {
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username) return;
-    await fetch(`/api/user`, {
+    setUsernameError(null);
+    const res = await fetch(`/api/user`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ wallet_address: address, username }),
     });
-    setShowUsernameModal(false);
+    const data = await res.json();
+    if (res.ok && data.user) {
+      setShowUsernameModal(false);
+    } else {
+      setUsernameError(data.error || "Failed to create user");
+    }
   };
 
   return (
@@ -152,6 +159,7 @@ export function WalletAddressWithUserSync() {
               onChange={e => setUsername(e.target.value)}
               required
             />
+            {usernameError && <div className="text-red-600 text-sm">{usernameError}</div>}
             <button
               type="submit"
               className="bg-blue text-white rounded px-4 py-2 font-semibold hover:bg-blue/80 transition"

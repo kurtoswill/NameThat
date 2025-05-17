@@ -61,7 +61,6 @@ export async function handleUploadAndSavePost({
     }
     const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/post-uploads/${uploadData.path}`;
     // 3. Insert into nfts table (no auth required if public policy is set)
-    // Only insert into nfts if image upload succeeded and all validation passed
     const insertObj = {
       user_id: user_id ?? undefined,
       image_url: imageUrl,
@@ -71,14 +70,14 @@ export async function handleUploadAndSavePost({
       votes: 0,
       status: "new", // always set to 'new' on creation
       created_at: new Date().toISOString(),
-      suggestion_text: (mode === "vote_only" || mode === "hybrid") ? validOptions : undefined, // Save uploader options as array
+      // DO NOT include suggestion_text here!
     };
     const cleanInsertObj = Object.fromEntries(Object.entries(insertObj).filter(([, value]) => value !== undefined && value !== null));
     const { data: nftInsertData, error: insertError } = await supabase.from("nfts").insert(cleanInsertObj).select("id");
-    if (insertError) {
+    if (insertError || !nftInsertData || !nftInsertData[0]?.id) {
       // If NFT insert fails, delete the uploaded image to avoid orphaned files
       await supabase.storage.from("post-uploads").remove([`user-uploads/${filename}`]);
-      return { success: false, error: `Could not save post to database: ${insertError.message}` };
+      return { success: false, error: `Could not save post to database: ${insertError ? insertError.message : 'Unknown error'}` };
     }
     // If vote_only or hybrid, insert suggestions into suggestions table
     if ((mode === "vote_only" || mode === "hybrid") && validOptions && validOptions.length >= 2 && nftInsertData && nftInsertData[0]?.id) {
@@ -86,7 +85,7 @@ export async function handleUploadAndSavePost({
       const suggestionRows = validOptions.map((suggestion_text) => ({
         user_id: user_id ?? undefined,
         nft_id,
-        suggestion_text,
+        suggestion_text: String(suggestion_text),
         votes: 0,
         created_at: new Date().toISOString(),
       }));
