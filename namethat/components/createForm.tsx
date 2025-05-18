@@ -28,7 +28,7 @@ export default function CreateForm() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
-  const [mode, setMode] = useState<"open" | "vote_only" | "hybrid">("open");
+  const [mode, setMode] = useState<"open_suggestion" | "vote_only" | "hybrid">("open_suggestion");
   const [categories, setCategories] = useState<string[]>([]);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -95,7 +95,7 @@ export default function CreateForm() {
   };
 
   useEffect(() => {
-    if (mode === "open") {
+    if (mode === "open_suggestion") {
       tempSuggestions.current = [];
       setOptions([]);
     }
@@ -141,7 +141,7 @@ export default function CreateForm() {
       return;
     }
 
-    if (mode !== "open") {
+    if (mode !== "open_suggestion") {
       if (tempSuggestions.current.length < 2) {
         toast.showToast("You must provide at least 2 options for vote only mode.", "error");
         setIsSubmitting(false);
@@ -187,7 +187,7 @@ export default function CreateForm() {
       toast.showToast("Post has been uploaded successfully!", "success");
       setFile(null);
       setCaption("");
-      setMode("open");
+      setMode("open_suggestion");
       setCategories([]);
       tempSuggestions.current = [];
       setOptions([]);
@@ -416,7 +416,7 @@ export default function CreateForm() {
             {/* --- Segmented Button Mode Selector --- */}
             <div className="flex gap-2 my-4">
               {[
-                { value: "open", label: "Open Suggestions" },
+                { value: "open_suggestion", label: "Open Suggestions" },
                 { value: "vote_only", label: "Vote Only" },
                 { value: "hybrid", label: "Hybrid" },
               ].map(opt => (
@@ -429,7 +429,7 @@ export default function CreateForm() {
                       : "bg-white text-blue border border-blue hover:bg-blue/10"
                     }
                     focus:outline-none focus:ring-2 focus:ring-blue`}
-                  onClick={() => setMode(opt.value as "open" | "vote_only" | "hybrid")}
+                  onClick={() => setMode(opt.value as "open_suggestion" | "vote_only" | "hybrid")}
                   aria-pressed={mode === opt.value}
                 >
                   {opt.label}

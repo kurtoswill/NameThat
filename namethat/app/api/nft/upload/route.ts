@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
         categories: categories || [],
         votes: 0,
         status: 'public',
-        submission_type: submission_type || 'regular',
+        submission_type: submission_type || 'open_suggestion',
       },
     ])
     .select()

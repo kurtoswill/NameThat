@@ -15,7 +15,7 @@ export default function Explore() {
     categories: string[];
     votes: number;
     status: string;
-    submission_type: string;
+    submission_type: "open_suggestion" | "vote_only" | "hybrid";
     created_at: string;
     user_id: string;
   }

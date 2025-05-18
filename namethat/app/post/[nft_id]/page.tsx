@@ -8,8 +8,8 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 interface Option {
   id: number | string;
-  name: string;
-  votes: number;
+  suggestion_text: string;
+  votes: number[]; // Changed to array of numbers
 }
 
 interface NFT {
@@ -17,7 +17,7 @@ interface NFT {
   id: string;
   image_url: string;
   caption?: string;
-  mode: "open" | "vote_only" | "hybrid";
+  mode: "open_suggestion" | "vote_only" | "hybrid";
   options: Option[];
   created_at: string;
   // uploader_username removed since we fetch username separately now
@@ -47,12 +47,18 @@ export default function PostPage() {
         const res = await fetch(`/api/nft/explore?id=${nft_id}`);
         const json = await res.json();
         if (json.nft) {
-          setNft({ ...json.nft, mode: json.nft.submission_type });
+          // Only allow valid submission_type values
+          const validModes = ["open_suggestion", "vote_only", "hybrid"];
+          const mode = json.nft.submission_type;
+          if (!validModes.includes(mode)) {
+            setNft(null);
+            setOptions([]);
+            setLoading(false);
+            return;
+          }
+          setNft({ ...json.nft, mode });
 
-          if (
-            json.nft.submission_type === "vote_only" ||
-            json.nft.submission_type === "hybrid"
-          ) {
+          if (mode === "vote_only" || mode === "hybrid") {
             const suggRes = await fetch(`/api/nft/suggestions?nft_id=${nft_id}`);
             const suggJson = await suggRes.json();
             setOptions(Array.isArray(suggJson.suggestions) ? suggJson.suggestions : []);
@@ -118,6 +124,10 @@ export default function PostPage() {
     }
 
     async function fetchUsername() {
+      if (!nft || !nft.user_id) {
+        setUsername(null);
+        return;
+      }
       const { data, error } = await supabase
         .from("users")
         .select("username")
@@ -183,7 +193,7 @@ export default function PostPage() {
   // --- Destructure here, so TS knows nft is not null ---
   const { image_url, caption, mode } = nft;
 
-  const showAddSuggestion = mode === "open" || mode === "hybrid";
+  const showAddSuggestion = mode === "open_suggestion" || mode === "hybrid";
   const displayOptions = options;
 
   return (
@@ -219,8 +229,8 @@ export default function PostPage() {
               <button className="bg-blue text-white rounded-[10px] px-4 py-1 text-[15px] font-semibold">
                 {mode === "hybrid"
                   ? "Hybrid"
-                  : mode === "open"
-                  ? "Open"
+                  : mode === "open_suggestion"
+                  ? "Open Suggestion"
                   : "Vote Only"}
               </button>
               <div className="ml-auto flex items-center gap-2">
@@ -270,36 +280,48 @@ export default function PostPage() {
                 <div className="text-gray-400 italic">No suggestions yet.</div>
               ) : (
                 (() => {
-                  const maxVotes = Math.max(...displayOptions.map(n => n.votes), 1);
-                  return displayOptions.map(n => (
-                    <div className="flex items-center gap-4" key={n.id}>
-                      <span
-                        className={`font-semibold text-[18px] flex-1 transition-colors ${votedId === n.id ? "text-pink" : ""}`}
-                        style={{ minWidth: 0, maxWidth: 180, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
-                      >
-                        {n.name}
-                      </span>
-                      <div className="flex-1 flex items-center max-w-[320px] min-w-[120px]">
-                        <div className="relative w-full h-7">
-                          <div className="absolute top-0 left-0 w-full h-full rounded-full border border-blue bg-white" />
-                          <div
-                            className={`absolute top-0 left-0 h-full rounded-full transition-all ${votedId === n.id ? "bg-pink" : "bg-blue"}`}
-                            style={{ width: `${Math.max(10, (n.votes / maxVotes) * 100)}%`, minWidth: 28 }}
-                          />
+                  // For each suggestion row, loop through suggestion_text array and its votes
+                  return displayOptions.flatMap(suggestionRow => {
+                    if (!Array.isArray(suggestionRow.suggestion_text)) return [];
+                    return suggestionRow.suggestion_text.map((option: string, idx: number) => {
+                      let voteCount = 0;
+                      if (Array.isArray(suggestionRow.votes)) {
+                        const v = suggestionRow.votes[idx];
+                        voteCount = typeof v === 'string' ? parseInt(v) : (typeof v === 'number' ? v : 0);
+                        if (isNaN(voteCount)) voteCount = 0;
+                      }
+                      const optionKey = `${suggestionRow.id}-${idx}`;
+                      return (
+                        <div className="flex items-center gap-4" key={optionKey}>
+                          <span
+                            className={`font-semibold text-[18px] flex-1 transition-colors ${votedId === optionKey ? "text-pink" : ""}`}
+                            style={{ minWidth: 0, maxWidth: 180, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+                          >
+                            {option}
+                          </span>
+                          <div className="flex-1 flex items-center max-w-[320px] min-w-[120px]">
+                            <div className="relative w-full h-7">
+                              <div className="absolute top-0 left-0 w-full h-full rounded-full border border-blue bg-white" />
+                              <div
+                                className={`absolute top-0 left-0 h-full rounded-full transition-all ${votedId === optionKey ? "bg-pink" : "bg-blue"}`}
+                                style={{ width: `${Math.max(10, voteCount)}%`, minWidth: 28 }}
+                              />
+                            </div>
+                          </div>
+                          <span className="text-[13px] text-black/60 min-w-[110px] text-right">
+                            {voteCount.toLocaleString()} {voteCount === 1 ? "vote" : "votes"}
+                          </span>
+                          <button
+                            className={`rounded-full px-4 py-1 text-[15px] transition-colors ${votedId === optionKey ? "bg-pink text-white opacity-80 cursor-default" : "bg-blue text-white hover:bg-blue/80"}`}
+                            disabled={votedId !== null}
+                            onClick={() => handleVote(suggestionRow.id)}
+                          >
+                            {votedId === optionKey ? "Voted" : "Vote"}
+                          </button>
                         </div>
-                      </div>
-                      <span className="text-[13px] text-black/60 min-w-[110px] text-right">
-                        {n.votes.toLocaleString()} {n.votes === 1 ? "vote" : "votes"}
-                      </span>
-                      <button
-                        className={`rounded-full px-4 py-1 text-[15px] transition-colors ${votedId === n.id ? "bg-pink text-white opacity-80 cursor-default" : "bg-blue text-white hover:bg-blue/80"}`}
-                        disabled={votedId !== null}
-                        onClick={() => handleVote(n.id)}
-                      >
-                        {votedId === n.id ? "Voted" : "Vote"}
-                      </button>
-                    </div>
-                  ));
+                      );
+                    });
+                  });
                 })()
               )}
             </div>

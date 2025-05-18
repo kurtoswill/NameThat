@@ -14,7 +14,7 @@ export async function handleUploadAndSavePost({
 }: {
   file: File;
   caption: string;
-  mode: "open" | "vote_only" | "hybrid";
+  mode: "open_suggestion" | "vote_only" | "hybrid";
   category: string;
   walletAddress: string;
   options?: string[];
@@ -64,7 +64,7 @@ export async function handleUploadAndSavePost({
 
     // 3. Insert into nfts table
     const insertObj = {
-      user_id: user_id ?? undefined,// <--- add this line
+      user_id: user_id ?? undefined,
       image_url: imageUrl,
       name: "",
       caption,
@@ -73,7 +73,7 @@ export async function handleUploadAndSavePost({
         : category.split(",").map((c) => c.trim()).filter(Boolean),
       votes: 0,
       status: "new",
-      submission_text: mode,
+      submission_type: mode,
       created_at: new Date().toISOString(),
     };
     const cleanInsertObj = Object.fromEntries(Object.entries(insertObj).filter(([, value]) => value !== undefined && value !== null));
@@ -86,17 +86,18 @@ export async function handleUploadAndSavePost({
     // 4. Insert suggestions if needed...
     if ((mode === "vote_only" || mode === "hybrid") && validOptions && validOptions.length >= 2 && nftInsertData && nftInsertData[0]?.id) {
       const nft_id = nftInsertData[0].id;
+      // Store options array in suggestion_text (as array)
       const suggestionRow = {
         user_id: user_id ?? undefined,
         nft_id,
-        suggestion_text: validOptions,
-        votes: 0,
+        suggestion_text: validOptions, // <-- store options array in suggestion_text (text[])
+        votes: Array(validOptions.length).fill(0),
         created_at: new Date().toISOString(),
       };
       const { error: suggestionError } = await supabase.from("suggestions").insert([suggestionRow]);
       if (suggestionError) {
         await supabase.from("nfts").delete().eq("id", nft_id);
-        await supabase.storage.from("post-uploads").remove([`user-uploads/${filename}`]);
+        await supabase.storage.from("post-uploads/${filename}");
         return { success: false, error: `NFT saved, but failed to save suggestions: ${suggestionError.message}` };
       }
     }

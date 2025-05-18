@@ -10,25 +10,70 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing nft_id' }, { status: 400 });
   }
 
-  // Fetch the suggestions row for this nft_id
+  // Fetch all suggestions rows for this nft_id
   const { data, error } = await supabase
     .from('suggestions')
     .select('id, suggestion_text, votes')
-    .eq('nft_id', nftId)
-    .single();
+    .eq('nft_id', nftId);
 
   if (error || !data) {
     return NextResponse.json({ error: error?.message || 'Not found' }, { status: 404 });
   }
 
-  // suggestion_text is an array of options
-  const suggestions = Array.isArray(data.suggestion_text)
-    ? data.suggestion_text.map((text, idx) => ({
-        id: `${data.id}-${idx}`,
-        name: text,
-        votes: data.votes || 0, // all options share the same votes field in this schema
-      }))
-    : [];
+  // Each row is a suggestion
+  const suggestions = data.flatMap(row => {
+    if (Array.isArray(row.suggestion_text)) {
+      return row.suggestion_text.map((option, idx) => ({
+        id: `${row.id}-${idx}`,
+        suggestion_text: option,
+        votes: Array.isArray(row.votes) ? (parseInt(row.votes[idx]) || 0) : 0,
+        suggestion_row_id: row.id,
+        option_index: idx,
+      }));
+    } else {
+      return [{
+        id: row.id,
+        suggestion_text: row.suggestion_text,
+        votes: Array.isArray(row.votes) ? (parseInt(row.votes[0]) || 0) : (row.votes || 0),
+        suggestion_row_id: row.id,
+        option_index: 0,
+      }];
+    }
+  });
 
   return NextResponse.json({ suggestions });
+}
+
+// PATCH /api/nft/suggestions { nft_id, suggestion_id }
+export async function PATCH(req: NextRequest) {
+  const { nft_id, suggestion_id } = await req.json();
+  if (!nft_id || !suggestion_id) {
+    return NextResponse.json({ error: 'Missing nft_id or suggestion_id' }, { status: 400 });
+  }
+
+  // Fetch the suggestion row
+  const { data, error } = await supabase
+    .from('suggestions')
+    .select('id, votes')
+    .eq('id', suggestion_id)
+    .single();
+
+  if (error || !data) {
+    return NextResponse.json({ error: error?.message || 'Suggestion not found' }, { status: 404 });
+  }
+
+  // Increment the first entry in the votes array (for single-option suggestions)
+  const votesArr = Array.isArray(data.votes) ? [...data.votes] : [0];
+  votesArr[0] = (parseInt(votesArr[0]) || 0) + 1;
+
+  const { error: updateError } = await supabase
+    .from('suggestions')
+    .update({ votes: votesArr })
+    .eq('id', suggestion_id);
+
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
 }

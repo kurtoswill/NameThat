@@ -8,7 +8,7 @@ votes
 id: uuid; user_id(users.id): uuid; nft_id(nfts.id): uuid; created_at: timestamp
 
 suggestions
-id: uuid; user_id(users.id): uuid; nft_id(nfts.id): uuid; suggestion_text: text; votes: integer; created_at: timestamp
+id: uuid; user_id(users.id): uuid; nft_id(nfts.id): uuid; suggestion_text: text; votes: text[]; created_at: timestamp
 
 user_stats
 user_id(users.id): uuid; uploaded_images: integer; suggestions_won: integer; suggestions_given: integer; winning_entries: integer; nfts_owned: integer
