@@ -8,11 +8,16 @@ import { WalletAddressWithUserSync as WalletAddress } from "@/components/walletA
 
 // Placeholder Logo
 const Logo = () => (
-  <div className="w-10 h-10 rounded-full bg-blue flex items-center justify-center text-white font-bold select-none">
-    {/* Replace with your SVG or image */}
-    <span></span>
+  <div className="w-10 h-10 rounded-full bg-[#FFFDF6] flex items-center justify-center select-none">
+    <img
+      src="/images/namethat_logo.png"
+      alt="Logo"
+      className="w-full h-full"
+      style={{ background: "transparent" }}
+    />
   </div>
 );
+
 
 // Icons as React components
 function HomeIcon({ className }: { className?: string }) {
@@ -74,9 +79,8 @@ export default function ResponsiveNavbar() {
               <Link
                 key={name}
                 href={href}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-blue font-semibold text-[16px] hover:bg-blue/10 transition ${
-                  isActive(href) ? "text-pink" : ""
-                }`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-blue font-semibold text-[16px] hover:bg-blue/10 transition ${isActive(href) ? "text-pink" : ""
+                  }`}
               >
                 <Icon className="w-6 h-6" />
                 <span>{name}</span>
@@ -115,17 +119,15 @@ export default function ResponsiveNavbar() {
         {/* Home */}
         <Link href="/" aria-label="Home">
           <HomeIcon
-            className={`w-7 h-7 text-white cursor-pointer ${
-              isActive("/") ? "opacity-100" : "opacity-60"
-            }`}
+            className={`w-7 h-7 text-white cursor-pointer ${isActive("/") ? "opacity-100" : "opacity-60"
+              }`}
           />
         </Link>
         {/* Explore */}
         <Link href="/explore" aria-label="Explore">
           <ExploreIcon
-            className={`w-7 h-7 text-white cursor-pointer ${
-              isActive("/explore") ? "opacity-100" : "opacity-60"
-            }`}
+            className={`w-7 h-7 text-white cursor-pointer ${isActive("/explore") ? "opacity-100" : "opacity-60"
+              }`}
           />
         </Link>
         {/* Create (centered and bigger) */}
@@ -139,17 +141,15 @@ export default function ResponsiveNavbar() {
         {/* Leaderboards */}
         <Link href="/leaderboard" aria-label="Leaderboards">
           <LeaderboardIcon
-            className={`w-7 h-7 text-white cursor-pointer ${
-              isActive("/leaderboard") ? "opacity-100" : "opacity-60"
-            }`}
+            className={`w-7 h-7 text-white cursor-pointer ${isActive("/leaderboard") ? "opacity-100" : "opacity-60"
+              }`}
           />
         </Link>
         {/* Profile */}
         <Link href="/profile" aria-label="Profile">
           <ProfileIcon
-            className={`w-7 h-7 text-white cursor-pointer ${
-              isActive("/profile") ? "opacity-100" : "opacity-60"
-            }`}
+            className={`w-7 h-7 text-white cursor-pointer ${isActive("/profile") ? "opacity-100" : "opacity-60"
+              }`}
           />
         </Link>
         {/* WalletAddress removed from here */}

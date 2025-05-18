@@ -32,14 +32,21 @@ export default function Profile() {
 
     const handleSave = async () => {
         // Save username to database
-        await fetch('/api/user', {
+        const res = await fetch('/api/user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ wallet_address: address, username: tempName }),
         });
-        setUsername(tempName);
-        setEditing(false);
+        if (res.ok) {
+            setUsername(tempName);
+            setEditing(false);
+            // Optionally show a success message
+        } else {
+            const { error } = await res.json();
+            alert(error || "Failed to update username");
+        }
     };
+
 
     const handleCancel = () => {
         setTempName(username);
@@ -115,12 +122,12 @@ export default function Profile() {
                                                     style={{
                                                         opacity:
                                                             tempName.trim() === "" ||
-                                                            tempName.trim() === username.trim()
+                                                                tempName.trim() === username.trim()
                                                                 ? 0.5
                                                                 : 1,
                                                         cursor:
                                                             tempName.trim() === "" ||
-                                                            tempName.trim() === username.trim()
+                                                                tempName.trim() === username.trim()
                                                                 ? "not-allowed"
                                                                 : "pointer",
                                                     }}
@@ -150,8 +157,8 @@ export default function Profile() {
                                                 style={{ lineHeight: 0, height: "40px" }}
                                             >
                                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M3 17H17" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                                    <path d="M12.5 4.5L15.5 7.5C15.8978 7.89782 16.1022 8.10218 16.2071 8.29289C16.2982 8.45455 16.3546 8.63261 16.3706 8.81713C16.3882 9.02244 16.3552 9.23013 16.2892 9.42641C16.2172 9.64112 16.0622 9.89645 15.7522 10.2064L8.5 17.5H3V12.5L10.2936 5.20645C10.6036 4.89645 10.8589 4.74147 11.0736 4.66949C11.2699 4.60353 11.4776 4.57054 11.6829 4.58813C11.8674 4.60413 12.0455 4.66054 12.2071 4.75161C12.3978 4.85647 12.6022 5.06083 13 5.45865L12.5 4.5Z" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    <path d="M3 17H17" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                    <path d="M12.5 4.5L15.5 7.5C15.8978 7.89782 16.1022 8.10218 16.2071 8.29289C16.2982 8.45455 16.3546 8.63261 16.3706 8.81713C16.3882 9.02244 16.3552 9.23013 16.2892 9.42641C16.2172 9.64112 16.0622 9.89645 15.7522 10.2064L8.5 17.5H3V12.5L10.2936 5.20645C10.6036 4.89645 10.8589 4.74147 11.0736 4.66949C11.2699 4.60353 11.4776 4.57054 11.6829 4.58813C11.8674 4.60413 12.0455 4.66054 12.2071 4.75161C12.3978 4.85647 12.6022 5.06083 13 5.45865L12.5 4.5Z" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                                 </svg>
                                             </button>
                                         )
@@ -177,8 +184,8 @@ export default function Profile() {
                                             style={{ lineHeight: 0, height: "40px" }}
                                         >
                                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <rect x="7" y="7" width="9" height="9" rx="2" stroke="#2563eb" strokeWidth="2"/>
-                                                <rect x="4" y="4" width="9" height="9" rx="2" stroke="#2563eb" strokeWidth="2"/>
+                                                <rect x="7" y="7" width="9" height="9" rx="2" stroke="#2563eb" strokeWidth="2" />
+                                                <rect x="4" y="4" width="9" height="9" rx="2" stroke="#2563eb" strokeWidth="2" />
                                             </svg>
                                         </button>
                                     )}

@@ -10,20 +10,20 @@ export async function handleUploadAndSavePost({
   mode,
   category,
   walletAddress,
-  options, // <-- add options to destructure
+  options,
 }: {
   file: File;
   caption: string;
   mode: "open" | "vote_only" | "hybrid";
   category: string;
   walletAddress: string;
-  options?: string[]; // <-- add options type
+  options?: string[];
 }) {
   try {
     if (!walletAddress) {
       return { success: false, error: "Please connect your wallet." };
     }
-    // Restrict vote_only or hybrid mode to at least 2 non-empty options and no empty options allowed
+    // Validate options...
     let validOptions = options;
     if (mode === "vote_only" || mode === "hybrid") {
       validOptions = (options || []).map(opt => (opt ?? '').trim());
@@ -34,21 +34,22 @@ export async function handleUploadAndSavePost({
         return { success: false, error: "All options must be filled in and not empty." };
       }
     }
-    // 1. Find user_id by wallet address (optional, but keep for association)
+
+    // 1. Find user_id and username by wallet address
     let user_id = null;
     if (walletAddress) {
       const { data: user, error: userError } = await supabase
         .from("users")
-        .select("id")
+        .select("id, username")
         .eq("wallet_address", walletAddress)
         .single();
-      if (userError && userError.code !== 'PGRST116') { // ignore 'No rows found' error
+      if (userError && userError.code !== 'PGRST116') {
         return { success: false, error: `User lookup failed: ${userError.message}` };
       }
       user_id = user?.id || null;
     }
-    // 2. Upload image (no auth required if public policy is set)
-    // Only upload image if all validation above passes
+
+    // 2. Upload image
     const filename = `${walletAddress}-${Date.now()}-${file.name}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("post-uploads")
@@ -60,40 +61,40 @@ export async function handleUploadAndSavePost({
       return { success: false, error: "Image upload failed: No path returned." };
     }
     const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/post-uploads/${uploadData.path}`;
-    // 3. Insert into nfts table (no auth required if public policy is set)
+
+    // 3. Insert into nfts table
     const insertObj = {
-      user_id: user_id ?? undefined,
+      user_id: user_id ?? undefined,// <--- add this line
       image_url: imageUrl,
-      name: "", // Set to empty string to satisfy NOT NULL constraint
+      name: "",
       caption,
       categories: Array.isArray(category)
         ? category
         : category.split(",").map((c) => c.trim()).filter(Boolean),
       votes: 0,
-      status: "new", // always set to 'new' on creation
+      status: "new",
+      submission_text: mode,
       created_at: new Date().toISOString(),
-      // DO NOT include suggestion_text here!
     };
     const cleanInsertObj = Object.fromEntries(Object.entries(insertObj).filter(([, value]) => value !== undefined && value !== null));
     const { data: nftInsertData, error: insertError } = await supabase.from("nfts").insert(cleanInsertObj).select("id");
     if (insertError || !nftInsertData || !nftInsertData[0]?.id) {
-      // If NFT insert fails, delete the uploaded image to avoid orphaned files
       await supabase.storage.from("post-uploads").remove([`user-uploads/${filename}`]);
       return { success: false, error: `Could not save post to database: ${insertError ? insertError.message : 'Unknown error'}` };
     }
-    // If vote_only or hybrid, insert all options as an array in a single suggestions row
+
+    // 4. Insert suggestions if needed...
     if ((mode === "vote_only" || mode === "hybrid") && validOptions && validOptions.length >= 2 && nftInsertData && nftInsertData[0]?.id) {
       const nft_id = nftInsertData[0].id;
       const suggestionRow = {
         user_id: user_id ?? undefined,
         nft_id,
-        suggestion_text: validOptions, // Store all options as an array in one row
+        suggestion_text: validOptions,
         votes: 0,
         created_at: new Date().toISOString(),
       };
       const { error: suggestionError } = await supabase.from("suggestions").insert([suggestionRow]);
       if (suggestionError) {
-        // If suggestions insert fails, clean up NFT and image
         await supabase.from("nfts").delete().eq("id", nft_id);
         await supabase.storage.from("post-uploads").remove([`user-uploads/${filename}`]);
         return { success: false, error: `NFT saved, but failed to save suggestions: ${suggestionError.message}` };
