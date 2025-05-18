@@ -44,6 +44,35 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ suggestions });
 }
 
+// POST /api/nft/suggestions { nft_id, suggestion }
+export async function POST(req: NextRequest) {
+  const { nft_id, suggestion } = await req.json();
+  if (!nft_id || !suggestion) {
+    return NextResponse.json({ error: 'Missing nft_id or suggestion' }, { status: 400 });
+  }
+
+  // Insert a new suggestion row for open_suggestion mode
+  // suggestion_text is a string, votes is an array with one 0
+  const { data, error } = await supabase
+    .from('suggestions')
+    .insert([
+      {
+        nft_id,
+        suggestion_text: suggestion,
+        votes: [0],
+        created_at: new Date().toISOString(),
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true, suggestion: data });
+}
+
 // PATCH /api/nft/suggestions { nft_id, suggestion_id }
 export async function PATCH(req: NextRequest) {
   const { nft_id, suggestion_id } = await req.json();

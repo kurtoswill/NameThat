@@ -101,6 +101,23 @@ export async function handleUploadAndSavePost({
         return { success: false, error: `NFT saved, but failed to save suggestions: ${suggestionError.message}` };
       }
     }
+    // Insert an empty suggestion row for open_suggestion mode
+    if (mode === "open_suggestion" && nftInsertData && nftInsertData[0]?.id) {
+      const nft_id = nftInsertData[0].id;
+      const suggestionRow = {
+        user_id: user_id ?? undefined,
+        nft_id,
+        suggestion_text: "", // empty string for open_suggestion
+        votes: [0],
+        created_at: new Date().toISOString(),
+      };
+      const { error: suggestionError } = await supabase.from("suggestions").insert([suggestionRow]);
+      if (suggestionError) {
+        await supabase.from("nfts").delete().eq("id", nft_id);
+        await supabase.storage.from("post-uploads/${filename}");
+        return { success: false, error: `NFT saved, but failed to save initial empty suggestion: ${suggestionError.message}` };
+      }
+    }
     return { success: true };
   } catch (error) {
     if (error instanceof Error) {

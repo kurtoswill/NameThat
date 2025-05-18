@@ -147,21 +147,29 @@ export default function PostPage() {
   }, [nft, supabase]);
 
   // --- Add suggestion logic for open/hybrid ---
-  const handleAddSuggestion = async () => {
-    if (!suggestion.trim()) return;
+  const [suggestionInput, setSuggestionInput] = useState("");
+  const [localSuggestions, setLocalSuggestions] = useState<string[]>([]);
+
+  const handleAddLocalSuggestion = async () => {
+    const trimmed = suggestionInput.trim();
+    if (!trimmed) return;
+    if (localSuggestions.includes(trimmed)) return;
+    setLocalSuggestions(prev => [...prev, trimmed]);
+    setSuggestionInput("");
+    // Submit to backend so it's visible to others
     try {
       const res = await fetch("/api/nft/suggestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nft_id, suggestion: suggestion.trim() }),
+        body: JSON.stringify({ nft_id, suggestion: trimmed }),
       });
       if (!res.ok) throw new Error("Failed to add suggestion");
-      setSuggestion("");
       // No need to update options here; realtime will update
     } catch {
       alert("Failed to add suggestion");
     }
   };
+
 
   const handleVote = async (id: number | string) => {
     if (votedId !== null) return;
@@ -251,30 +259,65 @@ export default function PostPage() {
                 {shareCopied && <span className="ml-2 text-green-600 text-xs">Link copied!</span>}
               </div>
             </div>
-            {showAddSuggestion && (
-              <div className="flex flex-col gap-2 mt-2">
+            {showAddSuggestion && mode === "open_suggestion" && (
+              <div className="flex flex-col gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 flex items-center bg-[#f7f8fa] rounded-xl px-4 py-2">
-                    <span className="text-blue font-semibold mr-2">1.</span>
-                    <input
-                      className="flex-1 px-4 py-2 bg-white border-2 border-blue rounded-lg outline-none text-[16px] text-blue placeholder:text-blue font-medium"
-                      placeholder="Your Suggestion"
-                      value={suggestion}
-                      onChange={e => setSuggestion(e.target.value)}
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    className="flex-1 p-3 border-2 border-blue text-black placeholder:text-blue rounded-lg focus:outline-none focus:ring-2 focus:ring-blue text-[16px]"
+                    placeholder="Type a suggestion and press +"
+                    value={suggestionInput}
+                    onChange={e => setSuggestionInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === '+') {
+                        e.preventDefault();
+                        handleAddLocalSuggestion();
+                      }
+                    }}
+                  />
                   <button
                     type="button"
-                    className="mt-2 w-fit bg-blue text-white rounded-[10px] px-5 py-2 text-[16px] font-normal flex items-center gap-2"
-                    onClick={handleAddSuggestion}
+                    className="bg-blue text-white rounded-lg px-3 py-2 font-bold text-lg hover:bg-blue/80 transition disabled:opacity-50"
+                    onClick={handleAddLocalSuggestion}
+                    disabled={!suggestionInput.trim()}
+                    aria-label="Add suggestion"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    Add Suggestion
+                    +
                   </button>
                 </div>
+                {/* List of added suggestions, styled like vote_only options, not removable */}
+                {localSuggestions.length > 0 && (
+                  <div className="flex flex-col gap-1 mt-2">
+                    {localSuggestions.map((opt, idx) => (
+                      <div key={idx} className="flex items-center gap-4">
+                        <span
+                          className={"font-semibold text-[18px] flex-1 transition-colors text-blue"}
+                          style={{ minWidth: 0, maxWidth: 180, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+                        >
+                          {opt}
+                        </span>
+                        <div className="flex-1 flex items-center max-w-[320px] min-w-[120px]">
+                          <div className="relative w-full h-7">
+                            <div className="absolute top-0 left-0 w-full h-full rounded-full border border-blue bg-white" />
+                            <div
+                              className="absolute top-0 left-0 h-full rounded-full bg-blue"
+                              style={{ width: `10%`, minWidth: 28 }}
+                            />
+                          </div>
+                        </div>
+                        <span className="text-[13px] text-black/60 min-w-[110px] text-right">
+                          0 votes
+                        </span>
+                        <button
+                          className="rounded-full px-4 py-1 text-[15px] bg-blue text-white opacity-50 cursor-not-allowed"
+                          disabled
+                        >
+                          Vote
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             <div className="mt-6 flex flex-col gap-4">
