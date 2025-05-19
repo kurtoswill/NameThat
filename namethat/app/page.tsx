@@ -8,9 +8,26 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import Link from "next/link";
 
 export default function HomePage() {
+  type NewDropNFT = { id: string; image_url: string; caption?: string };
+  const [newDrops, setNewDrops] = useState<NewDropNFT[]>([]);
+  useEffect(() => {
+    async function fetchNewDrops() {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const res = await fetch(`/api/nft/explore?since=${encodeURIComponent(since)}`);
+      const json = await res.json();
+      if (json.nfts) {
+        setNewDrops(json.nfts);
+      } else {
+        setNewDrops([]);
+      }
+    }
+    fetchNewDrops();
+  }, []);
+
   return (
     <>
       {/* Navbar always on top */}
@@ -193,59 +210,24 @@ export default function HomePage() {
             ]}
           >
             <CarouselContent className="flex gap-x-4 px-2">
-              {[
-                "/images/NikeDunks.jpg",
-                "/images/OrangeApe.png",
-                "/images/Hape.jpg",
-                "/images/WalterWhite.jpg",
-              ].map((src, i) => (
-                <CarouselItem
-                  key={i}
-                  className="flex-[0_0_calc(50%-0.5rem)] md:flex-[0_0_calc(25%-0.75rem)] rounded-[12px] overflow-hidden"
-                >
-                  <img
-                    src={src}
-                    alt=""
-                    className="w-full h-full object-cover aspect-square rounded-[12px]"
-                  />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-          </Carousel>
-
-          {/* Bottom Carousel */}
-          <Carousel
-            className="-mt-[10px] mb-[24px] overflow-hidden"
-            opts={{
-              align: "start",
-              loop: true,
-              containScroll: "trimSnaps",
-            }}
-            plugins={[
-              Autoplay({
-                delay: 2000,
-                stopOnInteraction: false,
-              }),
-            ]}
-          >
-            <CarouselContent className="flex gap-x-4 px-2">
-              {[
-                "/images/JinWoo.jpg",
-                "/images/V2K.jpg",
-                "/images/ProjectNFT.jpg",
-                "/images/Liquid.gif",
-              ].map((src, i) => (
-                <CarouselItem
-                  key={i}
-                  className="flex-[0_0_calc(50%-0.5rem)] md:flex-[0_0_calc(25%-0.75rem)] rounded-[12px] overflow-hidden"
-                >
-                  <img
-                    src={src}
-                    alt=""
-                    className="w-full h-full object-cover aspect-square rounded-[12px]"
-                  />
-                </CarouselItem>
-              ))}
+              {newDrops.length === 0 ? (
+                <div className="text-gray-400 italic p-8">No new drops in the last 24 hours.</div>
+              ) : (
+                newDrops.map((nft, i) => (
+                  <CarouselItem
+                    key={nft.id || i}
+                    className="flex-[0_0_calc(50%-0.5rem)] md:flex-[0_0_calc(25%-0.75rem)] rounded-[12px] overflow-hidden"
+                  >
+                    <Link href={`/post/${nft.id}`} className="block w-full h-full">
+                      <img
+                        src={nft.image_url}
+                        alt={nft.caption || "NFT"}
+                        className="w-full h-full object-cover aspect-square rounded-[12px] hover:scale-105 transition"
+                      />
+                    </Link>
+                  </CarouselItem>
+                ))
+              )}
             </CarouselContent>
           </Carousel>
         </div>

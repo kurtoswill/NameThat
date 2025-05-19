@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const nftId = searchParams.get('id');
+  const since = searchParams.get('since');
 
   if (nftId) {
     // Fetch a single NFT by id
@@ -19,11 +20,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ nft: data });
   }
 
-  // Fetch ALL NFTs
-  const { data, error } = await supabase
+  // Fetch ALL NFTs or only those since a certain date
+  let query = supabase
     .from('nfts')
     .select('*')
     .order('created_at', { ascending: false });
+
+  if (since) {
+    query = query.gte('created_at', since);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
