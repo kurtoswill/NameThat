@@ -222,13 +222,17 @@ export default function PostPage() {
       suggestionsArr = [];
       votesArr = [];
     }
-    displayOptions = suggestionsArr.map((s, i) => ({
-      id: `${options[0].id}-${i}`,
-      suggestion_text: s,
-      votes: votesArr[i] !== undefined ? Number(votesArr[i]) : 0,
-      suggestion_row_id: typeof options[0].suggestion_row_id === 'string' ? options[0].suggestion_row_id : String(options[0].id),
-      option_index: i,
-    }));
+    // Instead of mapping by index, explicitly loop through both arrays to ensure correct mapping
+    displayOptions = [];
+    for (let i = 0; i < suggestionsArr.length; i++) {
+      displayOptions.push({
+        id: `${options[0].id}-${i}`,
+        suggestion_text: suggestionsArr[i],
+        votes: votesArr && votesArr[i] !== undefined ? Number(votesArr[i]) : 0,
+        suggestion_row_id: typeof options[0].suggestion_row_id === 'string' ? options[0].suggestion_row_id : String(options[0].id),
+        option_index: i,
+      });
+    }
     // Always keep options normalized in state
     if (options.length !== displayOptions.length) {
       setOptions(displayOptions);
@@ -236,10 +240,10 @@ export default function PostPage() {
     }
   } else if (Array.isArray(options)) {
     // Already normalized
-    displayOptions = (options as Option[]).filter(o => typeof o.suggestion_text === 'string').map((o, i) => ({
-      ...o,
-      id: o.id ?? String(i),
-      votes: typeof o.votes === 'number' ? o.votes : Number(o.votes) || 0,
+    displayOptions = (options as Option[]).filter(opt => typeof opt.suggestion_text === 'string').map((opt, idx) => ({
+      ...opt,
+      id: opt.id ?? String(idx),
+      votes: typeof opt.votes === 'number' ? opt.votes : Number(opt.votes) || 0,
     }));
   }
 
