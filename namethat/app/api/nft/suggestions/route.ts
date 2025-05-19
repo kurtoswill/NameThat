@@ -22,23 +22,29 @@ export async function GET(req: NextRequest) {
 
   // Each row is a suggestion
   const suggestions = data.flatMap(row => {
-    if (Array.isArray(row.suggestion_text)) {
-      return row.suggestion_text.map((option, idx) => ({
-        id: `${row.id}-${idx}`,
-        suggestion_text: option,
-        votes: Array.isArray(row.votes) ? (parseInt(row.votes[idx]) || 0) : 0,
-        suggestion_row_id: row.id,
-        option_index: idx,
-      }));
-    } else {
-      return [{
-        id: row.id,
-        suggestion_text: row.suggestion_text,
-        votes: Array.isArray(row.votes) ? (parseInt(row.votes[0]) || 0) : (row.votes || 0),
-        suggestion_row_id: row.id,
-        option_index: 0,
-      }];
+    // Always treat suggestion_text and votes as arrays
+    const suggestionArr: string[] = Array.isArray(row.suggestion_text) ? row.suggestion_text : (row.suggestion_text ? [row.suggestion_text] : []);
+    let votesArr: string[] = Array.isArray(row.votes) ? row.votes : (row.votes ? [row.votes] : []);
+    // Fix: flatten any stringified arrays (e.g. '[0]')
+    if (votesArr.length === 1 && typeof votesArr[0] === 'string' && votesArr[0].startsWith('[')) {
+      try {
+        const parsed = JSON.parse(votesArr[0]);
+        if (Array.isArray(parsed)) votesArr = parsed.map(v => v.toString());
+      } catch {}
     }
+    // Ensure votesArr matches suggestionArr length
+    if (votesArr.length < suggestionArr.length) {
+      votesArr = [...votesArr, ...Array(suggestionArr.length - votesArr.length).fill('0')];
+    } else if (votesArr.length > suggestionArr.length) {
+      votesArr = votesArr.slice(0, suggestionArr.length);
+    }
+    return suggestionArr.map((option, idx) => ({
+      id: `${row.id}-${idx}`,
+      suggestion_text: option,
+      votes: parseInt(votesArr[idx]) || 0,
+      suggestion_row_id: row.id,
+      option_index: idx,
+    }));
   });
 
   return NextResponse.json({ suggestions });
@@ -51,54 +57,99 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing nft_id or suggestion' }, { status: 400 });
   }
 
-  // Insert a new suggestion row for open_suggestion mode
-  // suggestion_text is a string, votes is an array with one 0
-  const { data, error } = await supabase
+  // Try to find the open_suggestion row for this nft_id
+  const { data: row, error: fetchError } = await supabase
     .from('suggestions')
-    .insert([
-      {
-        nft_id,
-        suggestion_text: suggestion,
-        votes: [0],
-        created_at: new Date().toISOString(),
-      },
-    ])
-    .select()
+    .select('id, suggestion_text, votes')
+    .eq('nft_id', nft_id)
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (fetchError || !row) {
+    // No row exists, create it
+    const { error: insertError } = await supabase
+      .from('suggestions')
+      .insert([
+        {
+          nft_id,
+          suggestion_text: [suggestion],
+          votes: ["0"],
+          created_at: new Date().toISOString(),
+        },
+      ])
+      .select()
+      .single();
+    if (insertError) {
+      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
+    return NextResponse.json({ success: true, suggestion: suggestion });
   }
 
-  return NextResponse.json({ success: true, suggestion: data });
+  // suggestion_text and votes are arrays
+  let suggestionArr: string[] = Array.isArray(row.suggestion_text) ? [...row.suggestion_text] : (row.suggestion_text ? [row.suggestion_text] : []);
+  // Fix: flatten any stringified arrays (e.g. '["Test"]')
+  if (suggestionArr.length === 1 && typeof suggestionArr[0] === 'string' && suggestionArr[0].startsWith('[')) {
+    try {
+      const parsed = JSON.parse(suggestionArr[0]);
+      if (Array.isArray(parsed)) suggestionArr = parsed.map(v => v.toString());
+    } catch {}
+  }
+  let votesArr: string[] = Array.isArray(row.votes) ? [...row.votes] : (row.votes ? [row.votes] : []);
+  // Fix: flatten any stringified arrays (e.g. '[0]')
+  if (votesArr.length === 1 && typeof votesArr[0] === 'string' && votesArr[0].startsWith('[')) {
+    try {
+      const parsed = JSON.parse(votesArr[0]);
+      if (Array.isArray(parsed)) votesArr = parsed.map(v => v.toString());
+    } catch {}
+  }
+  suggestionArr.push(suggestion);
+  votesArr.push("0");
+  // Ensure votesArr matches suggestionArr length
+  if (votesArr.length < suggestionArr.length) {
+    votesArr = [...votesArr, ...Array(suggestionArr.length - votesArr.length).fill('0')];
+  } else if (votesArr.length > suggestionArr.length) {
+    votesArr = votesArr.slice(0, suggestionArr.length);
+  }
+
+  const { error: updateError } = await supabase
+    .from('suggestions')
+    .update({ suggestion_text: suggestionArr, votes: votesArr })
+    .eq('id', row.id);
+
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true, suggestion: suggestion });
 }
 
-// PATCH /api/nft/suggestions { nft_id, suggestion_id }
+// PATCH /api/nft/suggestions { nft_id, user_id, suggestion_index }
 export async function PATCH(req: NextRequest) {
-  const { nft_id, suggestion_id } = await req.json();
-  if (!nft_id || !suggestion_id) {
-    return NextResponse.json({ error: 'Missing nft_id or suggestion_id' }, { status: 400 });
+  const { nft_id, user_id, suggestion_index } = await req.json();
+  if (!nft_id || user_id == null || suggestion_index == null) {
+    return NextResponse.json({ error: 'Missing nft_id, user_id, or suggestion_index' }, { status: 400 });
   }
 
-  // Fetch the suggestion row
-  const { data, error } = await supabase
+  // Find the open_suggestion row for this nft_id
+  const { data: row, error: fetchError } = await supabase
     .from('suggestions')
     .select('id, votes')
-    .eq('id', suggestion_id)
+    .eq('nft_id', nft_id)
     .single();
 
-  if (error || !data) {
-    return NextResponse.json({ error: error?.message || 'Suggestion not found' }, { status: 404 });
+  if (fetchError || !row) {
+    return NextResponse.json({ error: fetchError?.message || 'Suggestion row not found' }, { status: 404 });
   }
 
-  // Increment the first entry in the votes array (for single-option suggestions)
-  const votesArr = Array.isArray(data.votes) ? [...data.votes] : [0];
-  votesArr[0] = (parseInt(votesArr[0]) || 0) + 1;
+  const votesArr: string[] = Array.isArray(row.votes) ? [...row.votes] : (row.votes ? [row.votes] : []);
+  if (votesArr[suggestion_index] == null) {
+    return NextResponse.json({ error: 'Invalid suggestion index' }, { status: 400 });
+  }
+  votesArr[suggestion_index] = ((parseInt(votesArr[suggestion_index]) || 0) + 1).toString();
 
   const { error: updateError } = await supabase
     .from('suggestions')
     .update({ votes: votesArr })
-    .eq('id', suggestion_id);
+    .eq('id', row.id);
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });

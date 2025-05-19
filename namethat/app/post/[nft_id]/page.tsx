@@ -32,7 +32,6 @@ export default function PostPage() {
   const [nft, setNft] = useState<NFT | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [suggestion, setSuggestion] = useState("");
   const [options, setOptions] = useState<Option[]>([]);
   const [votedId, setVotedId] = useState<number | string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
@@ -60,13 +59,10 @@ export default function PostPage() {
           }
           setNft({ ...json.nft, mode });
 
-          if (mode === "vote_only" || mode === "hybrid") {
-            const suggRes = await fetch(`/api/nft/suggestions?nft_id=${nft_id}`);
-            const suggJson = await suggRes.json();
-            setOptions(Array.isArray(suggJson.suggestions) ? suggJson.suggestions : []);
-          } else {
-            setOptions([]);
-          }
+          // Always fetch and display suggestions for all modes
+          const suggRes = await fetch(`/api/nft/suggestions?nft_id=${nft_id}`);
+          const suggJson = await suggRes.json();
+          setOptions(Array.isArray(suggJson.suggestions) ? suggJson.suggestions : []);
         } else {
           setNft(null);
         }
@@ -204,6 +200,7 @@ export default function PostPage() {
   const { image_url, caption, mode } = nft;
 
   const showAddSuggestion = mode === "open_suggestion" || mode === "hybrid";
+  // Always display options, even in open_suggestion mode
   const displayOptions = options;
 
   return (

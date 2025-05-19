@@ -63,60 +63,79 @@ export async function handleUploadAndSavePost({
     const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/post-uploads/${uploadData.path}`;
 
     // 3. Insert into nfts table
-    const insertObj = {
-      user_id: user_id ?? undefined,
-      image_url: imageUrl,
-      name: "",
-      caption,
-      categories: Array.isArray(category)
-        ? category
-        : category.split(",").map((c) => c.trim()).filter(Boolean),
-      votes: 0,
-      status: "new",
-      submission_type: mode,
-      created_at: new Date().toISOString(),
-    };
-    const cleanInsertObj = Object.fromEntries(Object.entries(insertObj).filter(([, value]) => value !== undefined && value !== null));
-    const { data: nftInsertData, error: insertError } = await supabase.from("nfts").insert(cleanInsertObj).select("id");
-    if (insertError || !nftInsertData || !nftInsertData[0]?.id) {
+    let nft_id: string | null = null;
+    try {
+      const insertObj = {
+        user_id: user_id ?? undefined,
+        image_url: imageUrl,
+        name: "",
+        caption,
+        categories: Array.isArray(category)
+          ? category
+          : category.split(",").map((c) => c.trim()).filter(Boolean),
+        votes: 0,
+        status: "new",
+        submission_type: mode,
+        created_at: new Date().toISOString(),
+      };
+      const cleanInsertObj = Object.fromEntries(Object.entries(insertObj).filter(([, value]) => value !== undefined && value !== null));
+      const { data: nftInsertData, error: insertError } = await supabase.from("nfts").insert(cleanInsertObj).select("id");
+      if (insertError || !nftInsertData || !nftInsertData[0]?.id) {
+        await supabase.storage.from("post-uploads").remove([`user-uploads/${filename}`]);
+        return { success: false, error: `Could not save post to database: ${insertError ? insertError.message : 'Unknown error'}` };
+      }
+      nft_id = nftInsertData[0].id;
+    } catch (err) {
       await supabase.storage.from("post-uploads").remove([`user-uploads/${filename}`]);
-      return { success: false, error: `Could not save post to database: ${insertError ? insertError.message : 'Unknown error'}` };
+      let msg = "Unexpected error during NFT insert.";
+      if (err instanceof Error) msg += ` ${err.message}`;
+      else if (typeof err === "string") msg += ` ${err}`;
+      return { success: false, error: msg };
     }
 
     // 4. Insert suggestions if needed...
-    if ((mode === "vote_only" || mode === "hybrid") && validOptions && validOptions.length >= 2 && nftInsertData && nftInsertData[0]?.id) {
-      const nft_id = nftInsertData[0].id;
-      // Store options array in suggestion_text (as array)
-      const suggestionRow = {
-        user_id: user_id ?? undefined,
-        nft_id,
-        suggestion_text: validOptions, // <-- store options array in suggestion_text (text[])
-        votes: Array(validOptions.length).fill(0),
-        created_at: new Date().toISOString(),
-      };
-      const { error: suggestionError } = await supabase.from("suggestions").insert([suggestionRow]);
-      if (suggestionError) {
-        await supabase.from("nfts").delete().eq("id", nft_id);
-        await supabase.storage.from("post-uploads/${filename}");
-        return { success: false, error: `NFT saved, but failed to save suggestions: ${suggestionError.message}` };
+    try {
+      if ((mode === "vote_only" || mode === "hybrid") && validOptions && validOptions.length >= 2 && nft_id) {
+        // Store options array in suggestion_text (as array)
+        const suggestionRow = {
+          user_id: user_id ?? undefined,
+          nft_id,
+          suggestion_text: validOptions, // <-- store options array in suggestion_text (text[])
+          votes: Array(validOptions.length).fill(0),
+          created_at: new Date().toISOString(),
+        };
+        const { error: suggestionError } = await supabase.from("suggestions").insert([suggestionRow]);
+        if (suggestionError) {
+          await supabase.from("nfts").delete().eq("id", nft_id);
+          await supabase.storage.from("post-uploads").remove([`user-uploads/${filename}`]);
+          return { success: false, error: `NFT saved, but failed to save suggestions: ${suggestionError.message}` };
+        }
       }
-    }
-    // Insert an empty suggestion row for open_suggestion mode
-    if (mode === "open_suggestion" && nftInsertData && nftInsertData[0]?.id) {
-      const nft_id = nftInsertData[0].id;
-      const suggestionRow = {
-        user_id: user_id ?? undefined,
-        nft_id,
-        suggestion_text: "", // empty string for open_suggestion
-        votes: [0],
-        created_at: new Date().toISOString(),
-      };
-      const { error: suggestionError } = await supabase.from("suggestions").insert([suggestionRow]);
-      if (suggestionError) {
-        await supabase.from("nfts").delete().eq("id", nft_id);
-        await supabase.storage.from("post-uploads/${filename}");
-        return { success: false, error: `NFT saved, but failed to save initial empty suggestion: ${suggestionError.message}` };
+      // Insert an empty suggestion row for open_suggestion mode
+      if (mode === "open_suggestion" && nft_id) {
+        const suggestionRow = {
+          user_id: user_id ?? undefined,
+          nft_id,
+          suggestion_text: "", // empty string for open_suggestion
+          votes: [0],
+          created_at: new Date().toISOString(),
+        };
+        const { error: suggestionError } = await supabase.from("suggestions").insert([suggestionRow]);
+        if (suggestionError) {
+          await supabase.from("nfts").delete().eq("id", nft_id);
+          await supabase.storage.from("post-uploads").remove([`user-uploads/${filename}`]);
+          return { success: false, error: `NFT saved, but failed to save initial empty suggestion: ${suggestionError.message}` };
+        }
       }
+    } catch (err) {
+      if (nft_id) {
+        await supabase.from("nfts").delete().eq("id", nft_id);
+      }
+      await supabase.storage.from("post-uploads").remove([`user-uploads/${filename}`]);
+      let msg = "Unexpected error during suggestion insert.";
+      if (err instanceof Error) msg += ` ${err.message}`;
+      else if (typeof err === "string") msg += ` ${err}`;
+      return { success: false, error: msg };
     }
     return { success: true };
   } catch (error) {
