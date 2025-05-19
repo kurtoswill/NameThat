@@ -167,20 +167,17 @@ export default function PostPage() {
   };
 
 
-  const handleVote = async (id: number | string) => {
+  const handleVote = (id: number | string) => {
     if (votedId !== null) return;
-    try {
-      const res = await fetch("/api/nft/suggestions", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nft_id, suggestion_id: id }),
-      });
-      if (!res.ok) throw new Error("Failed to vote");
-      setVotedId(id);
-      // No need to update options here; realtime will update
-    } catch {
-      alert("Failed to vote");
-    }
+    setOptions(prevOptions =>
+      prevOptions.map(option => {
+        if (option.id === id) {
+          return { ...option, votes: (option.votes || 0) + 1 };
+        }
+        return option;
+      })
+    );
+    setVotedId(id);
   };
 
   const handleShare = async () => {
@@ -201,7 +198,50 @@ export default function PostPage() {
 
   const showAddSuggestion = mode === "open_suggestion" || mode === "hybrid";
   // Always display options, even in open_suggestion mode
-  const displayOptions = options;
+  // Normalize options: if a single row with stringified arrays, flatten to individual options
+  let displayOptions: Option[] = [];
+  if (
+    options.length === 1 &&
+    typeof options[0].suggestion_text === 'string' &&
+    options[0].suggestion_text.startsWith('[')
+  ) {
+    // Parse arrays
+    let suggestionsArr: string[] = [];
+    let votesArr: number[] = [];
+    try {
+      suggestionsArr = JSON.parse(options[0].suggestion_text);
+      const votesRaw = options[0].votes as unknown;
+      if (Array.isArray(votesRaw)) {
+        votesArr = votesRaw.map(Number);
+      } else if (typeof votesRaw === 'string' && votesRaw.startsWith('[')) {
+        votesArr = JSON.parse(votesRaw).map(Number);
+      } else {
+        votesArr = [Number(votesRaw)];
+      }
+    } catch {
+      suggestionsArr = [];
+      votesArr = [];
+    }
+    displayOptions = suggestionsArr.map((s, i) => ({
+      id: `${options[0].id}-${i}`,
+      suggestion_text: s,
+      votes: votesArr[i] !== undefined ? Number(votesArr[i]) : 0,
+      suggestion_row_id: typeof options[0].suggestion_row_id === 'string' ? options[0].suggestion_row_id : String(options[0].id),
+      option_index: i,
+    }));
+    // Always keep options normalized in state
+    if (options.length !== displayOptions.length) {
+      setOptions(displayOptions);
+      return null; // Prevent double-normalization
+    }
+  } else if (Array.isArray(options)) {
+    // Already normalized
+    displayOptions = (options as Option[]).filter(o => typeof o.suggestion_text === 'string').map((o, i) => ({
+      ...o,
+      id: o.id ?? String(i),
+      votes: typeof o.votes === 'number' ? o.votes : Number(o.votes) || 0,
+    }));
+  }
 
   return (
     <>
@@ -321,51 +361,38 @@ export default function PostPage() {
               {displayOptions.length === 0 ? (
                 <div className="text-gray-400 italic">No suggestions yet.</div>
               ) : (
-                displayOptions.flatMap(option => {
-                  // If suggestion_text is a JSON array string, parse and display each
-                  let optionsArr: string[] = [];
-                  try {
-                    if (typeof option.suggestion_text === 'string' && option.suggestion_text.startsWith('[')) {
-                      optionsArr = JSON.parse(option.suggestion_text);
-                    } else {
-                      optionsArr = [option.suggestion_text];
-                    }
-                  } catch {
-                    optionsArr = [option.suggestion_text];
-                  }
-                  return optionsArr.map((opt, idx) => {
-                    const voteCount = Array.isArray(option.votes) ? (parseInt(option.votes[idx]) || 0) : (typeof option.votes === 'number' ? option.votes : 0);
-                    const optionKey = `${option.id}-${idx}`;
-                    return (
-                      <div className="flex items-center gap-4" key={optionKey}>
-                        <span
-                          className={`font-semibold text-[18px] flex-1 transition-colors ${votedId === optionKey ? "text-pink" : ""}`}
-                          style={{ minWidth: 0, maxWidth: 180, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
-                        >
-                          {opt}
-                        </span>
-                        <div className="flex-1 flex items-center max-w-[320px] min-w-[120px]">
-                          <div className="relative w-full h-7">
-                            <div className="absolute top-0 left-0 w-full h-full rounded-full border border-blue bg-white" />
-                            <div
-                              className={`absolute top-0 left-0 h-full rounded-full transition-all ${votedId === optionKey ? "bg-pink" : "bg-blue"}`}
-                              style={{ width: `${Math.max(10, voteCount)}%`, minWidth: 28 }}
-                            />
-                          </div>
+                displayOptions.map((option, idx) => {
+                  const voteCount = option.votes;
+                  const optionKey = option.id;
+                  return (
+                    <div className="flex items-center gap-4" key={optionKey}>
+                      <span
+                        className={`font-semibold text-[18px] flex-1 transition-colors ${votedId === optionKey ? "text-pink" : ""}`}
+                        style={{ minWidth: 0, maxWidth: 180, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+                      >
+                        {option.suggestion_text}
+                      </span>
+                      <div className="flex-1 flex items-center max-w-[320px] min-w-[120px]">
+                        <div className="relative w-full h-7">
+                          <div className="absolute top-0 left-0 w-full h-full rounded-full border border-blue bg-white" />
+                          <div
+                            className={`absolute top-0 left-0 h-full rounded-full transition-all ${votedId === optionKey ? "bg-pink" : "bg-blue"}`}
+                            style={{ width: `${Math.max(10, voteCount)}%`, minWidth: 28 }}
+                          />
                         </div>
-                        <span className="text-[13px] text-black/60 min-w-[110px] text-right">
-                          {voteCount.toLocaleString()} {voteCount === 1 ? "vote" : "votes"}
-                        </span>
-                        <button
-                          className={`rounded-full px-4 py-1 text-[15px] transition-colors ${votedId === optionKey ? "bg-pink text-white opacity-80 cursor-default" : "bg-blue text-white hover:bg-blue/80"}`}
-                          disabled={votedId !== null}
-                          onClick={() => handleVote(option.suggestion_row_id || option.id)}
-                        >
-                          {votedId === optionKey ? "Voted" : "Vote"}
-                        </button>
                       </div>
-                    );
-                  });
+                      <span className="text-[13px] text-black/60 min-w-[110px] text-right">
+                        {voteCount.toLocaleString()} {voteCount === 1 ? "vote" : "votes"}
+                      </span>
+                      <button
+                        className={`rounded-full px-4 py-1 text-[15px] transition-colors ${votedId === optionKey ? "bg-pink text-white opacity-80 cursor-default" : "bg-blue text-white hover:bg-blue/80"}`}
+                        disabled={votedId !== null}
+                        onClick={() => handleVote(option.id)}
+                      >
+                        {votedId === optionKey ? "Voted" : "Vote"}
+                      </button>
+                    </div>
+                  );
                 })
               )}
             </div>
